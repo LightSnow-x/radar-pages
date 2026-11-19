@@ -13,8 +13,8 @@
     status: '/online'
   }[game];
   const relayBase = 'https://relay.invalid';
-  const socketUrl = settings.endpoint.replace(/\/$/, '') + '/' +
-    (game === 'status' ? game : game + '/' + room);
+  const socketPath = '/' + (game === 'status' ? game : game + '/' + room);
+  const endpoints = [...new Set([settings.endpoint, settings.fallbackEndpoint].filter(Boolean))];
   const roomValid = game === 'status' || /^\d{4}$/.test(room);
   const statusNode = document.getElementById('pages-connection');
   const nativeFetch = window.fetch.bind(window);
@@ -22,9 +22,12 @@
   const messages = new Set(['message', 'viewers', 'frame', 'ping', 'ended']);
   const replyTimeout = 16000;
   let channel;
+  let connecting;
   let feed;
   let requestId = 0;
   let nextConnection = 0;
+  let preferredEndpoint = 0;
+  let pageActive = true;
 
   function showStatus(status) {
     if (!statusNode) return;
@@ -53,21 +56,12 @@
     return new Response(typeof message.body === 'string' ? message.body : '', options);
   }
 
-  function connect() {
-    if (!roomValid) {
-      showStatus(400);
-      return Promise.resolve(400);
-    }
-    if (channel) return channel.ready;
-    if (Date.now() < nextConnection) return Promise.resolve(503);
-    showStatus(0);
+  function openChannel(endpoint) {
     let socket;
     try {
-      socket = new WebSocket(socketUrl);
+      socket = new WebSocket(endpoint.replace(/\/$/, '') + socketPath);
     } catch {
-      showStatus(503);
-      nextConnection = Date.now() + 1000;
-      return Promise.resolve(503);
+      return Promise.resolve(0);
     }
 
     let complete;
@@ -83,6 +77,7 @@
       }
       if (!message || typeof message !== 'object') return;
       if (message.type === 'ready' && state.status === 0) {
+        if (!Number.isInteger(message.status) || message.status < 200 || message.status > 599) return;
         clearTimeout(timer);
         state.status = message.status;
         showStatus(state.status);
@@ -105,15 +100,45 @@
     socket.addEventListener('close', () => {
       clearTimeout(timer);
       for (const finish of state.pending.values()) finish({status: 503});
-      complete(state.status || 503);
       if (channel === state) {
         channel = undefined;
-        nextConnection = Date.now() + 1000;
-        if (!state.status || state.status === 200) showStatus(503);
-        if (feed) feed.disconnected();
+        if (state.status) {
+          nextConnection = Date.now() + 1000;
+          if (state.status === 200) showStatus(503);
+          if (feed) feed.disconnected();
+        }
       }
+      complete(state.status);
     });
     return state.ready;
+  }
+
+  async function openAvailableChannel() {
+    for (let offset = 0; pageActive && offset < endpoints.length; ++offset) {
+      const index = (preferredEndpoint + offset) % endpoints.length;
+      const status = await openChannel(endpoints[index]);
+      if (status) {
+        preferredEndpoint = index;
+        return status;
+      }
+    }
+    nextConnection = Date.now() + 1000;
+    showStatus(503);
+    return 503;
+  }
+
+  function connect() {
+    if (!roomValid) {
+      showStatus(400);
+      return Promise.resolve(400);
+    }
+    if (!pageActive) return Promise.resolve(503);
+    if (connecting) return connecting;
+    if (channel) return channel.ready;
+    if (Date.now() < nextConnection) return Promise.resolve(503);
+    showStatus(0);
+    connecting = openAvailableChannel().finally(() => { connecting = undefined; });
+    return connecting;
   }
 
   function resourcePath(input) {
@@ -253,6 +278,10 @@
     }
   }
 
-  window.addEventListener('pagehide', () => { channel?.socket.close(); });
+  window.addEventListener('pagehide', () => {
+    pageActive = false;
+    channel?.socket.close();
+  });
+  window.addEventListener('pageshow', () => { pageActive = true; });
   window.RadarPages = {room, route, fetch: fetchResource, setImage, Stream: RadarStream};
 })();
