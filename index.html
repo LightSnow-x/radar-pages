@@ -10,17 +10,17 @@
   <title>LightSnow</title>
   <link rel="icon" href="./lightsnow.ico">
   <link rel="license" href="./OFL-Noto-Serif-SC.txt">
-  <link rel="preload" as="image" href="./winter-blossom.png">
-  <link rel="preload" as="font" href="./portal-heading.woff2?v=liquid" crossorigin>
-  <link rel="stylesheet" href="./radar-portal.css?v=mist-glass-20261119">
-  <script src="./vanilla-tilt.js" defer></script>
-  <script type="module" src="./portal-effects.js?v=mist-glass-20261119"></script>
-  <script src="./radar-portal.js?v=mist-glass-20261119" defer></script>
+  <link rel="preload" as="font" href="./portal-display.woff2" crossorigin>
+  <link rel="stylesheet" href="./radar-portal.css?v=fast-lobby-20261119">
+  <script src="./radar-portal.js?v=fast-lobby-20261119" defer></script>
 </head>
 <body>
-  <div class="scenery" aria-hidden="true"></div>
+  <picture class="scenery" aria-hidden="true">
+    <source media="(max-width: 46rem) and (max-aspect-ratio: 2/3)" srcset="./winter-blossom-portrait.webp">
+    <img src="./winter-blossom.webp" alt="" width="1500" height="844" fetchpriority="high" decoding="async">
+  </picture>
   <div class="mist" aria-hidden="true"></div>
-  <canvas id="snow" aria-hidden="true"></canvas>
+  <canvas id="snow" aria-hidden="true" hidden></canvas>
   <a class="skip-link" href="#games">跳到游戏入口</a>
   <header class="masthead wrap">
     <a class="brand" href="./" aria-label="LightSnow 首页">
@@ -50,31 +50,31 @@
         </a></li>
           <li><a class="portal-card game-card" href="./uam/">
             <span class="glass-surface" aria-hidden="true"></span>
-            <span class="card-top"><span class="icon-frame"><img src="https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/c7/03/aa/c703aa83-5625-b4dd-6249-370f65bd2aee/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/100x100bb.jpg" alt="" width="56" height="56" decoding="async"></span><span class="card-code" lang="en">UAM</span></span>
+            <span class="card-top"><span class="icon-frame"><img src="./portal-uam.webp" alt="" width="56" height="56" loading="lazy" decoding="async"></span><span class="card-code" lang="en">UAM</span></span>
             <span class="card-copy"><strong>暗区突围</strong><span class="card-subtitle" lang="en">Arena Breakout</span></span>
             <span class="card-bottom"><span class="card-hint">4 位房号</span><span class="card-action">加入房间</span></span>
           </a></li>
           <li><a class="portal-card game-card" href="./codm/">
             <span class="glass-surface" aria-hidden="true"></span>
-            <span class="card-top"><span class="icon-frame"><img src="https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/0f/7f/2a/0f7f2a5b-bf29-1cc3-3608-5cb2bc5754c7/AppIcon-0-0-1x_U007emarketing-0-10-0-85-220.png/100x100bb.jpg" alt="" width="56" height="56" decoding="async"></span><span class="card-code" lang="en">CODM</span></span>
+            <span class="card-top"><span class="icon-frame"><img src="./portal-codm.webp" alt="" width="56" height="56" loading="lazy" decoding="async"></span><span class="card-code" lang="en">CODM</span></span>
             <span class="card-copy"><strong>使命召唤手游</strong><span class="card-subtitle" lang="en">Call of Duty: Mobile</span></span>
             <span class="card-bottom"><span class="card-hint">4 位房号</span><span class="card-action">加入房间</span></span>
           </a></li>
           <li><a class="portal-card game-card" href="./cfm/">
             <span class="glass-surface" aria-hidden="true"></span>
-            <span class="card-top"><span class="icon-frame"><img src="https://game.gtimg.cn/images/cfm/web201801/logo.png?d=0924" alt="" width="56" height="56" decoding="async"></span><span class="card-code" lang="en">CFM</span></span>
+            <span class="card-top"><span class="icon-frame"><img src="./portal-cfm.webp" alt="" width="56" height="56" loading="lazy" decoding="async"></span><span class="card-code" lang="en">CFM</span></span>
             <span class="card-copy"><strong>穿越火线</strong><span class="card-edition">枪战王者</span><span class="card-subtitle" lang="en">CrossFire Mobile</span></span>
             <span class="card-bottom"><span class="card-hint">4 位房号</span><span class="card-action">加入房间</span></span>
           </a></li>
           <li><a class="portal-card game-card" href="./dfm/">
             <span class="glass-surface" aria-hidden="true"></span>
-            <span class="card-top"><span class="icon-frame"><img src="https://game.gtimg.cn/images/dfm/favicon.ico" alt="" width="56" height="56" decoding="async"></span><span class="card-code" lang="en">DFM</span></span>
+            <span class="card-top"><span class="icon-frame"><img src="./portal-dfm.webp" alt="" width="56" height="56" loading="lazy" decoding="async"></span><span class="card-code" lang="en">DFM</span></span>
             <span class="card-copy"><strong>三角洲行动</strong><span class="card-subtitle" lang="en">Delta Force</span></span>
             <span class="card-bottom"><span class="card-hint">4 位房号</span><span class="card-action">加入房间</span></span>
           </a></li>
           <li><a class="portal-card game-card" href="./Valorant/">
             <span class="glass-surface" aria-hidden="true"></span>
-            <span class="card-top"><span class="icon-frame"><img src="https://game.gtimg.cn/images/codev/act/a20250805launch/m/share.png" alt="" width="56" height="56" decoding="async"></span><span class="card-code" lang="en">VALORANT</span></span>
+            <span class="card-top"><span class="icon-frame"><img src="./portal-valorant.webp" alt="" width="56" height="56" loading="lazy" decoding="async"></span><span class="card-code" lang="en">VALORANT</span></span>
             <span class="card-copy"><strong>无畏契约</strong><span class="card-edition">源能行动</span><span class="card-subtitle" lang="en">Valorant Mobile</span></span>
             <span class="card-bottom"><span class="card-hint">4 位房号</span><span class="card-action">加入房间</span></span>
           </a></li>
@@ -84,7 +84,6 @@
   </main>
   <footer class="footer wrap"><p><span lang="en">LightSnow</span></p><span>手机开房，浏览器观看。</span></footer>
   <dialog class="welcome" id="welcome" aria-labelledby="welcome-title" aria-describedby="welcome-description">
-    <div class="welcome-scene" aria-hidden="true"></div>
     <div class="welcome-wash" aria-hidden="true"></div>
     <header class="welcome-nav">
       <span class="wordmark" lang="en">Light<i>Snow</i></span>
