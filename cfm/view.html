@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="dark"><meta name="theme-color" content="#12151a"><meta name="referrer" content="no-referrer">
+  <title>CFM · 战术地图</title>
+  <link rel="stylesheet" href="../connection.css">
+  <script defer src="../transport.js" data-game="cfm" data-endpoint="wss://xue.stancc.xyz/radar-ws"></script>
+  <link rel="icon" href="https://game.gtimg.cn/images/cfm/web201801/logo.png?d=0924"><link rel="stylesheet" href="./radar.css">
+</head>
+<body class="cfm-battlefield">
+<svg class="svg-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+ <symbol id="cf-map" viewBox="0 0 24 24"><path d="m2 5 6-3 8 3 6-3v17l-6 3-8-3-6 3zm6-3v17m8-14v17"/></symbol>
+ <symbol id="cf-person" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M4 21v-3a8 8 0 0 1 16 0v3"/></symbol>
+ <symbol id="cf-bot" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="14" rx="2"/><path d="M12 3v4M2 12v5m20-5v5M8 12v2m8-2v2m-8 3h8"/></symbol>
+ <symbol id="cf-self" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></symbol>
+ <symbol id="cf-team" viewBox="0 0 24 24"><path d="M9 3 7 21M17 3l-2 18M3 9h18M2 15h18"/></symbol>
+ <symbol id="cf-name" viewBox="0 0 24 24"><path d="M4 5h16M12 5v15M8 20h8M4 5v4m16-4v4"/></symbol>
+ <symbol id="cf-distance" viewBox="0 0 24 24"><path d="m3 16 13-13 5 5L8 21zM7 12l2 2m2-6 2 2m2-6 2 2"/></symbol>
+ <symbol id="cf-health" viewBox="0 0 24 24"><path d="M20 13c5-7-3-13-8-7C7 0-1 6 4 13l8 8zM3 12h5l2-4 4 8 2-4h5"/></symbol>
+ <symbol id="cf-weapon" viewBox="0 0 24 24"><path d="M2 8h14v6H6l-4 3V8Zm14 2h6M7 8V6h5v2M9 14l-2 7h4l2-7"/></symbol>
+ <symbol id="cf-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+ <symbol id="cf-play" viewBox="0 0 24 24"><path d="m8 4 12 8-12 8z"/></symbol>
+ <symbol id="cf-reset" viewBox="0 0 24 24"><path d="M3 10a9 9 0 1 1 2 9M3 3v7h7"/></symbol>
+ <symbol id="cf-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+ <symbol id="cf-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+ <symbol id="cf-exit" viewBox="0 0 24 24"><path d="M9 4H4v16h5m5-13 5 5-5 5M8 12h12"/></symbol>
+ <symbol id="cf-settings" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/></symbol>
+ <symbol id="cf-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+ <symbol id="cf-radar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="m12 12 7-7"/></symbol>
+</svg>
+<header class="battle-header">
+  <a class="battle-brand" href="./" aria-label="返回 CFM 登录"><img src="https://game.gtimg.cn/images/cfm/web201801/logo.png?d=0924" width="40" height="41" alt="CFM 图标"><div><strong>CFM</strong><span>火线雷达</span></div></a>
+  <div class="battle-map-title"><svg aria-hidden="true"><use href="#cf-map"/></svg><div><h1 id="cfm-map-title">等待地图</h1><span id="cfm-match-state">等待对局</span></div></div>
+  <div class="battle-counts" aria-label="目标数量"><span class="human-counter"><svg aria-hidden="true"><use href="#cf-person"/></svg><b id="cfm-human-count">—</b><small>真人</small></span><span class="bot-counter"><svg aria-hidden="true"><use href="#cf-bot"/></svg><b id="cfm-bot-count">—</b><small>人机</small></span></div>
+</header>
+<main class="battle-map" aria-label="CFM 全屏战术地图">
+  <canvas id="cfm-map" aria-label="可拖动平移、滚轮或双指缩放的地图"></canvas>
+  <svg id="cfm-markers" class="battle-markers" xmlns="http://www.w3.org/2000/svg" aria-label="人物名称、队伍编号和血量"><g id="cfm-targets"></g><g id="cfm-self" display="none" aria-label="自己"><circle fill="#2187ff" stroke="#fff" stroke-width="1.5"/><text class="marker-name" fill="#8dc9ff">自己</text></g></svg>
+  <div class="battle-connection"><span id="cfm-connection" class="state-tag" data-state="connecting"><i></i><span>连接中</span></span><span id="cfm-latency">—</span></div>
+  <div id="cfm-empty" class="battle-empty"><svg aria-hidden="true"><use href="#cf-radar"/></svg><strong id="cfm-empty-title">正在连接设备</strong><p id="cfm-empty-message">地图会随对局自动载入</p></div>
+  <div id="cfm-frozen" class="frozen-banner" hidden><svg aria-hidden="true"><use href="#cf-pause"/></svg>已暂停 · 当前画面为冻结位置</div>
+  <nav class="battle-tools" aria-label="地图工具">
+    <button id="cfm-toggle-controls" class="tool active" title="标记设置" aria-label="标记设置" aria-controls="cfm-controls" aria-expanded="true"><svg aria-hidden="true"><use href="#cf-settings"/></svg><span>标记</span></button>
+    <button id="cfm-pause" class="tool" title="暂停显示" aria-label="暂停显示" aria-pressed="false"><svg aria-hidden="true"><use id="cfm-pause-icon" href="#cf-pause"/></svg><span id="cfm-pause-text">暂停</span></button>
+    <button id="cfm-reset" class="tool" title="复位地图" aria-label="复位地图"><svg aria-hidden="true"><use href="#cf-reset"/></svg><span>复位</span></button>
+    <a class="tool" href="./" title="返回登录" aria-label="返回登录"><svg aria-hidden="true"><use href="#cf-exit"/></svg><span>退出</span></a>
+  </nav>
+  <div class="battle-zoom" aria-label="地图缩放"><button id="cfm-zoom-in" aria-label="放大地图"><svg aria-hidden="true"><use href="#cf-plus"/></svg></button><output id="cfm-zoom">100%</output><button id="cfm-zoom-out" aria-label="缩小地图"><svg aria-hidden="true"><use href="#cf-minus"/></svg></button></div>
+  <div class="battle-legend"><span><i class="human-dot"></i>真人</span><span><i class="bot-dot"></i>人机</span><span><i class="self-dot"></i>自己</span><span class="legend-note">名称在上 · 队号居中</span></div>
+  <section id="cfm-controls" class="control-dock" aria-label="标记设置">
+    <div class="dock-heading"><span><svg aria-hidden="true"><use href="#cf-settings"/></svg>标记设置 <small>更改自动保存</small></span><button id="cfm-close-controls" aria-label="收起标记设置"><svg aria-hidden="true"><use href="#cf-close"/></svg></button></div>
+    <div class="dock-options">
+      <label class="dock-option coral"><input id="cfm-points" type="checkbox" aria-label="人物圆点" checked><svg aria-hidden="true"><use href="#cf-person"/></svg><span>人物圆点</span><i></i></label>
+      <label class="dock-option gold"><input id="cfm-teams" type="checkbox" aria-label="队伍编号" checked><svg aria-hidden="true"><use href="#cf-team"/></svg><span>队伍编号</span><i></i></label>
+      <label class="dock-option blue"><input id="cfm-names" type="checkbox" aria-label="人物名称" checked><svg aria-hidden="true"><use href="#cf-name"/></svg><span>人物名称</span><i></i></label>
+      <label class="dock-option cyan"><input id="cfm-distances" type="checkbox" aria-label="人物距离" checked><svg aria-hidden="true"><use href="#cf-distance"/></svg><span>人物距离</span><i></i></label>
+      <label class="dock-option green"><input id="cfm-healthRing" type="checkbox" aria-label="血量圆环" checked><svg aria-hidden="true"><use href="#cf-health"/></svg><span>血量圆环</span><i></i></label>
+      <label class="dock-option violet"><input id="cfm-weapons" type="checkbox" aria-label="手持武器" checked><svg aria-hidden="true"><use href="#cf-weapon"/></svg><span>手持武器</span><i></i></label>
+      <div class="dock-size"><label for="cfm-point-size">圆点大小 <output id="cfm-point-size-value">10</output></label><input id="cfm-point-size" type="range" min="3" max="12" value="10"></div>
+    </div>
+  </section>
+</main>
+<footer class="battle-footer"><span id="cfm-device-address"></span><span id="cfm-status" role="status">等待数据</span></footer>
+<script type="module" src="./radar.mjs"></script>
+<p id="pages-connection" role="status" hidden></p>
+</body>
+</html>

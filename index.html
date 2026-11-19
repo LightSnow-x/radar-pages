@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#edf2f5">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="选择游戏，使用手机端的四位房间号进入房间。">
+  <title>LightSnow</title>
+  <link rel="icon" href="./lightsnow.ico">
+  <link rel="license" href="./OFL-Noto-Serif-SC.txt">
+  <link rel="preload" as="image" href="./winter-blossom.png">
+  <link rel="preload" as="font" href="./portal-heading.woff2?v=liquid" crossorigin>
+  <link rel="stylesheet" href="./radar-portal.css?v=mist-glass-20261119">
+  <script src="./vanilla-tilt.js" defer></script>
+  <script type="module" src="./portal-effects.js?v=mist-glass-20261119"></script>
+  <script src="./radar-portal.js?v=mist-glass-20261119" defer></script>
+</head>
+<body>
+  <div class="scenery" aria-hidden="true"></div>
+  <div class="mist" aria-hidden="true"></div>
+  <canvas id="snow" aria-hidden="true"></canvas>
+  <a class="skip-link" href="#games">跳到游戏入口</a>
+  <header class="masthead wrap">
+    <a class="brand" href="./" aria-label="LightSnow 首页">
+      <svg class="brand-mark" viewBox="0 0 36 36" fill="none" aria-hidden="true"><path d="M18 3v30M5 10.5l26 15M5 25.5l26-15M13.5 5.5 18 10l4.5-4.5M13.5 30.5 18 26l4.5 4.5M5 15l6-1.5L9.5 7.5M26.5 28.5 25 22.5l6-1.5M5 21l6 1.5-1.5 6M26.5 7.5 25 13.5l6 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="wordmark" lang="en">Light<i>Snow</i></span>
+    </a>
+    <nav class="primary-nav" aria-label="主导航"><a class="selected" href="#games" aria-current="page">大厅</a><a href="./online/">在线统计</a></nav>
+    <div class="header-tools">
+      <button class="icon-button" id="show-intro" type="button" aria-label="重新查看欢迎页" title="重新查看欢迎页" hidden><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.35"/><path d="M12 11v5M12 7.5v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+      <span class="tool-divider" aria-hidden="true"></span>
+      <button class="snow-toggle icon-button" type="button" aria-pressed="false" title="飘雪开关" hidden><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9 4.5 12 7l3-2.5M9 19.5 12 17l3 2.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sr-only">飘雪 <span class="snow-status">关</span></span></button>
+    </div>
+  </header>
+
+  <main class="lobby wrap">
+    <header class="lobby-heading">
+      <div><p class="section-label">SELECT YOUR GAME</p><h1 id="games-title" tabindex="-1">游戏大厅</h1></div>
+      <p>选择游戏，输入手机端的 <strong>4 位房间号</strong>。</p>
+    </header>
+    <nav id="games" aria-label="在线统计与游戏房间">
+      <ul class="card-grid">
+        <li><a class="portal-card stats-card" href="./online/">
+          <span class="glass-surface" aria-hidden="true"></span>
+          <span class="card-top"><span class="icon-frame stats-frame"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M9 29V19m11 10V10m11 19V15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M5 35h30" stroke="currentColor" stroke-opacity=".3"/></svg></span><span class="card-code" lang="en">OVERVIEW</span></span>
+          <span class="card-copy"><strong>在线统计</strong><span class="card-subtitle">查看各游戏、区服的在线人数</span></span>
+          <span class="card-bottom"><span class="card-hint">游戏与区服</span><span class="card-action">查看统计</span></span>
+        </a></li>
+          <li><a class="portal-card game-card" href="./uam/">
+            <span class="glass-surface" aria-hidden="true"></span>
+            <span class="card-top"><span class="icon-frame"><img src="https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/c7/03/aa/c703aa83-5625-b4dd-6249-370f65bd2aee/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/100x100bb.jpg" alt="" width="56" height="56" decoding="async"></span><span class="card-code" lang="en">UAM</span></span>
+            <span class="card-copy"><strong>暗区突围</strong><span class="card-subtitle" lang="en">Arena Breakout</span></span>
+            <span class="card-bottom"><span class="card-hint">4 位房号</span><span class="card-action">加入房间</span></span>
+          </a></li>
+          <li><a class="portal-card game-card" href="./codm/">
+            <span class="glass-surface" aria-hidden="true"></span>
+            <span class="card-top"><span class="icon-frame"><img src="https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/0f/7f/2a/0f7f2a5b-bf29-1cc3-3608-5cb2bc5754c7/AppIcon-0-0-1x_U007emarketing-0-10-0-85-220.png/100x100bb.jpg" alt="" width="56" height="56" decoding="async"></span><span class="card-code" lang="en">CODM</span></span>
+            <span class="card-copy"><strong>使命召唤手游</strong><span class="card-subtitle" lang="en">Call of Duty: Mobile</span></span>
+            <span class="card-bottom"><span class="card-hint">4 位房号</span><span class="card-action">加入房间</span></span>
+          </a></li>
+          <li><a class="portal-card game-card" href="./cfm/">
+            <span class="glass-surface" aria-hidden="true"></span>
+            <span class="card-top"><span class="icon-frame"><img src="https://game.gtimg.cn/images/cfm/web201801/logo.png?d=0924" alt="" width="56" height="56" decoding="async"></span><span class="card-code" lang="en">CFM</span></span>
+            <span class="card-copy"><strong>穿越火线</strong><span class="card-edition">枪战王者</span><span class="card-subtitle" lang="en">CrossFire Mobile</span></span>
+            <span class="card-bottom"><span class="card-hint">4 位房号</span><span class="card-action">加入房间</span></span>
+          </a></li>
+          <li><a class="portal-card game-card" href="./dfm/">
+            <span class="glass-surface" aria-hidden="true"></span>
+            <span class="card-top"><span class="icon-frame"><img src="https://game.gtimg.cn/images/dfm/favicon.ico" alt="" width="56" height="56" decoding="async"></span><span class="card-code" lang="en">DFM</span></span>
+            <span class="card-copy"><strong>三角洲行动</strong><span class="card-subtitle" lang="en">Delta Force</span></span>
+            <span class="card-bottom"><span class="card-hint">4 位房号</span><span class="card-action">加入房间</span></span>
+          </a></li>
+          <li><a class="portal-card game-card" href="./Valorant/">
+            <span class="glass-surface" aria-hidden="true"></span>
+            <span class="card-top"><span class="icon-frame"><img src="https://game.gtimg.cn/images/codev/act/a20250805launch/m/share.png" alt="" width="56" height="56" decoding="async"></span><span class="card-code" lang="en">VALORANT</span></span>
+            <span class="card-copy"><strong>无畏契约</strong><span class="card-edition">源能行动</span><span class="card-subtitle" lang="en">Valorant Mobile</span></span>
+            <span class="card-bottom"><span class="card-hint">4 位房号</span><span class="card-action">加入房间</span></span>
+          </a></li>
+      </ul>
+    </nav>
+    <p class="room-note">房间号由手机端提供。请确认两端选择了同一款游戏。</p>
+  </main>
+  <footer class="footer wrap"><p><span lang="en">LightSnow</span></p><span>手机开房，浏览器观看。</span></footer>
+  <dialog class="welcome" id="welcome" aria-labelledby="welcome-title" aria-describedby="welcome-description">
+    <div class="welcome-scene" aria-hidden="true"></div>
+    <div class="welcome-wash" aria-hidden="true"></div>
+    <header class="welcome-nav">
+      <span class="wordmark" lang="en">Light<i>Snow</i></span>
+      <div class="welcome-tools">
+        <button class="snow-toggle icon-button" type="button" aria-pressed="false" title="飘雪开关" hidden><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9 4.5 12 7l3-2.5M9 19.5 12 17l3 2.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sr-only">飘雪 <span class="snow-status">关</span></span></button>
+        <button class="icon-button" id="mist-toggle" type="button" aria-label="雾感" aria-pressed="true" title="雾感开关"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 8h14M3 12h18M6 16h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
+        <span class="tool-divider" aria-hidden="true"></span>
+        <button class="skip-intro" id="skip-intro" type="button">跳过介绍</button>
+      </div>
+    </header>
+    <div class="welcome-content">
+      <p class="welcome-eyebrow">WELCOME TO</p>
+      <h2 id="welcome-title" tabindex="-1" autofocus lang="en">LightSnow</h2>
+      <p class="welcome-summary" id="welcome-description">在浏览器里，查看实时雷达。</p>
+      <p class="welcome-detail">使用手机端的四位房间号，<br>把游戏房间连接到眼前的屏幕。</p>
+      <div class="welcome-entry">
+        <ol class="welcome-process" aria-label="加入房间的步骤">
+          <li><span class="step-number" aria-hidden="true">1</span><span>手机开房</span></li>
+          <li><span class="step-number" aria-hidden="true">2</span><span>选择游戏</span></li>
+          <li><span class="step-number" aria-hidden="true">3</span><span>输入房号</span></li>
+        </ol>
+        <div class="welcome-launch">
+          <button class="enter-button" id="enter-lobby" type="button"><span class="glass-surface" aria-hidden="true"></span><span>进入大厅</span></button>
+          <span class="welcome-device-note"><svg viewBox="0 0 32 22" fill="none" aria-hidden="true"><rect x="2" y="2" width="20" height="13" rx="2" stroke="currentColor" stroke-width="1.2"/><path d="M8 19h8m-4-4v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><rect x="23" y="7" width="7" height="13" rx="1.5" stroke="currentColor" stroke-width="1.2"/></svg><span>手机 · 平板 · 电脑</span></span>
+        </div>
+      </div>
+    </div>
+    <footer class="welcome-bottom"><span lang="en">LIGHTSNOW</span><span>首次访问介绍，下次直达大厅</span></footer>
+  </dialog>
+</body>
+</html>

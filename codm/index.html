@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="zh-CN"><head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>使命召唤手游 · 雷达房间</title>
+  <link rel="stylesheet" href="../entry.css"><script defer src="../entry.js"></script>
+</head><body><main class="room-entry">
+  <a href="../">返回游戏列表</a>
+  <img src="https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/0f/7f/2a/0f7f2a5b-bf29-1cc3-3608-5cb2bc5754c7/AppIcon-0-0-1x_U007emarketing-0-10-0-85-220.png/100x100bb.jpg" alt="" width="64" height="64" referrerpolicy="no-referrer">
+  <h1>使命召唤手游</h1>
+  <p>输入共享设备上的四位房间号。</p>
+  <form action="./view.html" method="get">
+    <label for="room">房间号</label>
+    <input id="room" name="room" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required>
+    <button type="submit">进入房间</button>
+  </form>
+  <p id="room-status" role="status"></p>
+</main></body></html>

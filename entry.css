@@ -1,0 +1,81 @@
+:root {
+  color-scheme: dark;
+  font: 1rem/1.55 system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #eff4fa;
+  background: #10141c;
+}
+
+body {
+  margin: 0;
+}
+
+.room-entry {
+  box-sizing: border-box;
+  width: min(100%, 30rem);
+  margin: 7vh auto 0;
+  padding: 1.25rem;
+}
+
+.room-entry a {
+  color: #d7e8ff;
+}
+
+.room-entry img {
+  display: block;
+  width: 4rem;
+  height: 4rem;
+  object-fit: cover;
+  border-radius: 0.8rem;
+  margin-top: 2rem;
+}
+
+.room-entry h1 {
+  margin: 0.55rem 0 0;
+  line-height: 1.2;
+}
+
+.room-entry p, #room-status {
+  color: #b6c2d2;
+}
+
+.room-entry form {
+  display: grid;
+  gap: 0.65rem;
+  padding: 1rem;
+  background: #1c2635;
+  border: 1px solid #344154;
+  border-radius: 0.85rem;
+}
+
+.room-entry input, .room-entry button {
+  box-sizing: border-box;
+  min-height: 3rem;
+  width: 100%;
+  font: inherit;
+  border-radius: 0.55rem;
+}
+
+.room-entry input {
+  padding: 0.5rem 0.8rem;
+  color: #eff4fa;
+  background: #111923;
+  border: 1px solid #52657d;
+  letter-spacing: 0.2em;
+}
+
+.room-entry button {
+  font-weight: 700;
+  color: #111923;
+  background: #d4e7ff;
+  border: 0;
+  cursor: pointer;
+}
+
+.room-entry :is(input, button, a):focus-visible {
+  outline: 2px solid #9fc7ff;
+  outline-offset: 4px;
+}
+
+#room-status:empty {
+  display: none;
+}

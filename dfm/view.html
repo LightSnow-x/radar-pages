@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101917">
+  <title>房间地图 · 三角洲行动</title>
+  <link rel="stylesheet" href="../connection.css">
+  <script defer src="../transport.js" data-game="dfm" data-endpoint="wss://xue.stancc.xyz/radar-ws"></script>
+  <link rel="stylesheet" href="./vendor/leaflet.css">
+  <link rel="stylesheet" href="./web.css">
+  <script defer src="./vendor/leaflet.js"></script>
+  <script type="module" src="./room.mjs"></script>
+</head>
+<body class="viewer">
+<div id="radarPage" class="show">
+  <div id="hud">
+    <span class="hud-dot wait" id="dot" aria-hidden="true"></span>
+    <span id="status" role="status">正在连接</span><span class="hud-separator" aria-hidden="true">|</span>
+    <span>房间 <b id="room-code"></b></span><span class="hud-separator" aria-hidden="true">|</span>
+    <span id="viewers" aria-live="polite">— 人在线</span>
+  </div>
+  <main id="map" aria-label="敌人位置地图"></main>
+  <div id="tile-status" role="status" hidden>底图暂时无法加载</div>
+<button type="button" id="menuBtn" aria-label="打开雷达设置" aria-expanded="false" aria-controls="sideMenu"><svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h6m4 0h6M4 17h10m4 0h2"/><circle cx="12" cy="7" r="2"/><circle cx="16" cy="17" r="2"/></svg><span>雷达设置</span></button>
+<aside id="sideMenu" role="region" aria-label="雷达设置" aria-hidden="true" inert>
+  <header class="panel-head"><div class="panel-brand"><svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4v8l5 5M4 12h3M12 17v3"/><circle cx="9" cy="10" r="1"/></svg></div><div class="panel-heading"><h2>雷达设置</h2></div><button type="button" class="panel-close" aria-label="关闭雷达设置"><svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg></button></header>
+  <div class="map-card"><div class="map-card-top"><label for="mapSel"><svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Zm6-2v16m6-14v16"/></svg>当前地图</label><span class="map-count">6 张地图</span></div><div class="map-select-wrap"><select class="menu-select" id="mapSel"><option value="0">零号大坝</option><option value="1">长弓溪谷</option><option value="2">航天基地</option><option value="3">巴克什</option><option value="4">潮汐监狱</option><option value="5">AZ3</option></select><svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></div></div>
+  <div class="map-card view-card">
+    <div class="map-card-top"><label for="viewSel">跟随视角</label></div>
+    <div class="map-select-wrap"><select class="menu-select" id="viewSel"><option value="free">自由看图</option></select><svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></div>
+  </div>
+  <div class="panel-scroll">
+    <section class="menu-section" aria-labelledby="display-title">
+      <h3 class="menu-title" id="display-title">显示内容</h3>
+      <div class="control-group">
+          <button type="button" class="sw-row" role="switch" aria-checked="true" data-setting="sAR"><span class="sw-label">头甲等级</span><span class="sw-track on" id="sAR" aria-hidden="true"><span class="sw-thumb"></span></span></button>
+          <button type="button" class="sw-row" role="switch" aria-checked="true" data-setting="sH"><span class="sw-label">干员名称</span><span class="sw-track on" id="sH" aria-hidden="true"><span class="sw-thumb"></span></span></button>
+          <button type="button" class="sw-row" role="switch" aria-checked="true" data-setting="sHP"><span class="sw-label">血量圆环</span><span class="sw-track on" id="sHP" aria-hidden="true"><span class="sw-thumb"></span></span></button>
+          <button type="button" class="sw-row" role="switch" aria-checked="true" data-setting="sTN"><span class="sw-label">队伍编号</span><span class="sw-track on" id="sTN" aria-hidden="true"><span class="sw-thumb"></span></span></button>
+      </div>
+    </section>
+  </div>
+  <footer class="panel-footer"><a href="./">返回房间入口</a><span>拖动平移 · 滚轮或双指缩放</span></footer>
+</aside>
+</div>
+<p id="pages-connection" role="status" hidden></p>
+</body>
+</html>

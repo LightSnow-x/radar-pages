@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="zh-CN"><head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>三角洲行动 · 雷达房间</title>
+  <link rel="stylesheet" href="../entry.css"><script defer src="../entry.js"></script>
+</head><body><main class="room-entry">
+  <a href="../">返回游戏列表</a>
+  <img src="https://game.gtimg.cn/images/dfm/favicon.ico" alt="" width="64" height="64" referrerpolicy="no-referrer">
+  <h1>三角洲行动</h1>
+  <p>输入共享设备上的四位房间号。</p>
+  <form action="./view.html" method="get">
+    <label for="room">房间号</label>
+    <input id="room" name="room" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required>
+    <button type="submit">进入房间</button>
+  </form>
+  <p id="room-status" role="status"></p>
+</main></body></html>

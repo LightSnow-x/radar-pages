@@ -1,0 +1,17 @@
+#pages-connection {
+  position: fixed;
+  z-index: 10000;
+  inset: auto 1rem 1rem auto;
+  max-width: calc(100vw - 2rem);
+  padding: 0.55rem 0.8rem;
+  color: #f0f4fa;
+  background: #172334;
+  border: 1px solid #6a829d;
+  border-radius: 0.5rem;
+  font: 0.875rem/1.55 system-ui, sans-serif;
+  pointer-events: none;
+}
+
+#pages-connection[hidden] {
+  display: none;
+}
