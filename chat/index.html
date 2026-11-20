@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>同行聊天室</title>
+  <link rel="stylesheet" href="../entry.css">
+  <link rel="stylesheet" href="./peer-chat.css">
+  <script defer src="./peer-chat.js" data-endpoint="ws://103.236.84.5:19558/radar-ws"></script>
+</head>
+<body>
+  <main class="room-entry peer-chat">
+    <a href="../">返回大厅</a>
+    <h1>同行聊天室</h1>
+    <p id="chat-status" role="status">选择游戏，输入 Worker 弹窗显示的同行房间号。</p>
+    <form id="join-room">
+      <label for="game">游戏</label>
+      <select id="game" name="game">
+        <option value="dfm/cn">三角洲行动</option>
+        <option value="uam/cn">暗区突围 · 国服</option>
+        <option value="uam/global">暗区突围 · 国际服</option>
+      </select>
+      <label for="room">同行房间号</label>
+      <input id="room" name="room" inputmode="numeric" pattern="[1-9][0-9]{0,19}" maxlength="20" autocomplete="off" required>
+      <button id="join" type="submit">进入聊天室</button>
+    </form>
+    <section id="conversation" aria-labelledby="room-heading" hidden>
+      <div class="conversation-header">
+        <h2 id="room-heading"></h2>
+        <button id="leave" type="button">退出</button>
+      </div>
+      <ol id="messages" role="log" aria-label="聊天消息" aria-relevant="additions"></ol>
+      <form id="send-message">
+        <label for="message">消息</label>
+        <input id="message" name="message" maxlength="300" autocomplete="off" required>
+        <button type="submit">发送</button>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

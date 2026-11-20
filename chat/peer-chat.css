@@ -1,0 +1,92 @@
+.peer-chat {
+  width: min(100%, 34rem);
+  margin-top: 4vh;
+}
+
+.peer-chat [hidden] {
+  display: none;
+}
+
+.peer-chat select {
+  box-sizing: border-box;
+  min-height: 3rem;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid #52657d;
+  border-radius: 0.55rem;
+  color: inherit;
+  background: #111923;
+  font: inherit;
+}
+
+.peer-chat select:focus-visible {
+  outline: 2px solid #9fc7ff;
+  outline-offset: 4px;
+}
+
+.peer-chat button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.conversation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.conversation-header h2 {
+  margin: 0;
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.conversation-header button {
+  flex: 0 0 4rem;
+  color: #eff4fa;
+  background: #263346;
+}
+
+#messages {
+  box-sizing: border-box;
+  height: clamp(9rem, 42vh, 23rem);
+  overflow-y: auto;
+  list-style: none;
+  margin: 0.75rem 0;
+  padding: 0.85rem;
+  border: 1px solid #344154;
+  border-radius: 0.85rem;
+  background: #161e29;
+  overflow-wrap: anywhere;
+}
+
+#messages li {
+  width: fit-content;
+  max-width: 85%;
+  margin-bottom: 0.6rem;
+  padding: 0.55rem 0.8rem;
+  background: #273548;
+  border-radius: 0.7rem;
+}
+
+#messages li.own {
+  margin-left: auto;
+  background: #23466b;
+}
+
+#send-message {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+#send-message label {
+  grid-column: 1 / -1;
+}
+
+#message {
+  letter-spacing: normal;
+}
+
+#send-message button {
+  padding-inline: 1rem;
+}
