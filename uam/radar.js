@@ -8,6 +8,9 @@
   let atlas,maps=[],map,selected,selectedFloor,bounds,focusBounds,generation=0,catalogGeneration=0,stream;
   let imageLayers=[],lastPacket=null,lastFrameAt=0,connectionTimer,followedMapId=0;
   let atlasRevision='',catalogRetry,catalogLoading=false,manualMapId='';
+  const mapPacks=globalThis.UamRadarMapPacks;
+  const mapPackButtons=mapPacks?Array.from(byId('mapPackChoices')?.querySelectorAll('[data-map-pack]')||[]):[];
+  let activeMapPack=null,packLoad=null;
   let viewMode='2d',followId='self',follow2d=false,rosterKey='',rosterSession='';
   const is3d=()=>viewMode!=='2d';
   let sceneRenderer=null,sceneKey='',sceneGeneration=0,sceneAbort=null,sceneBusy=false,nextSceneFetch=0;
@@ -128,9 +131,14 @@
       function finish(ok) {
         clearTimeout(timer);image.onload=image.onerror=null;
         if(ok&&image.naturalWidth===part.width&&image.naturalHeight===part.height)resolve(image);
-        else {images.delete(part.file);reject(new Error('游戏地图图片加载失败'));}
+        else {
+          if(images.get(part.file)===promise)images.delete(part.file);
+          reject(new Error('游戏地图图片加载失败'));
+        }
       }
-      image.onload=()=>finish(true);image.onerror=()=>finish(false);RadarPages.setImage(image,resourceUrl(part.file));
+      image.onload=()=>finish(true);image.onerror=()=>finish(false);
+      if(activeMapPack) image.src=activeMapPack.imageUrl(part.file);
+      else RadarPages.setImage(image,resourceUrl(part.file));
     });
     images.set(part.file,promise);
     while(images.size>8)images.delete(images.keys().next().value);
@@ -210,11 +218,11 @@
   }
   function validCatalog(value) {
     return value?.schema===2&&value.game==='uam-mobile'&&['cn','global'].includes(value.region)&&Array.isArray(value.maps)&&value.maps.length>0&&
-      value.maps.every(item=>typeof item.id==='string'&&typeof item.name==='string'&&Number.isInteger(item.gameMapId)&&
-        Array.isArray(item.layers)&&item.layers.length>0&&item.layers.every(layer=>typeof layer.id==='string'&&typeof layer.name==='string'&&
+      value.maps.every(item=>typeof item?.id==='string'&&typeof item.name==='string'&&Number.isInteger(item.gameMapId)&&
+        Array.isArray(item.layers)&&item.layers.length>0&&item.layers.every(layer=>typeof layer?.id==='string'&&typeof layer.name==='string'&&
           Number.isFinite(layer.width)&&Number.isFinite(layer.height)&&layer.width>0&&layer.height>0&&layer.width<=8192&&layer.height<=8192&&
           projection.valid(layer.projection)&&Array.isArray(layer.parts)&&layer.parts.length>0&&layer.parts.every(part=>
-            typeof part.file==='string'&&/^\/atlas\/image\/\d+\.png$/.test(part.file)&&['x','y','width','height'].every(k=>Number.isFinite(part[k]))&&
+            typeof part?.file==='string'&&/^\/atlas\/image\/\d+\.png$/.test(part.file)&&['x','y','width','height'].every(k=>Number.isFinite(part[k]))&&
             part.width>0&&part.height>0&&part.width<=8192&&part.height<=8192)));
   }
   function addOverview(item) {
@@ -227,43 +235,81 @@
       parts:item.layers.flatMap((layer,index)=>layer.parts.map(part=>({...part,blend:index?'lighten':'normal'})))};
     return {...item,layers:[overview,...item.layers]};
   }
-  async function loadCatalog() {
-    clearTimeout(catalogRetry);catalogLoading=true;
-    const request=++catalogGeneration;++generation;selectedFloor=null;clearImages();clearMarkers();images.clear();
-    atlas=null;maps=[];selected=null;
+  function clearCatalog() {
+    ++generation;clearImages();clearMarkers();images.clear();
+    atlas=null;maps=[];selected=selectedFloor=null;
     byId('fitMap').disabled=true;byId('mapSelect').disabled=true;byId('floorSelect').disabled=true;
+  }
+  function applyCatalog(value) {
+    atlasRevision=typeof value.revision==='string'?value.revision:'';
+    atlas=value;maps=value.maps.map(item=>addOverview({...item,annotations:annotationModel.prepare(item.annotations)}));
+    if(!maps.some(item=>item.id===manualMapId))manualMapId='';
+    options('mapSelect',preview?maps:[{id:'auto',name:'跟随当前对局'},...maps]);
+    byId('mapCount').textContent=maps.length+' 张地图';
+    byId('sourceInfo').textContent=(value.region==='cn'?'国服':'国际服')+' · '+value.version+' · ';
+    byId('mapSelect').disabled=false;byId('floorSelect').disabled=is3d();
+    const id=preview?params.get('map'):manualMapId;
+    if(!preview&&!manualMapId&&lastPacket?.active===true&&lastPacket.region===atlas.region&&lastPacket.coordinateSpace==='ue-world-centimeters'&&
+       maps.some(item=>item.gameMapId===lastPacket.mapId))followMap();
+    else selectMap(maps.some(item=>item.id===id)?id:maps[0].id);
+    updateFrameStatus();
+  }
+  async function loadCatalog() {
+    if(activeMapPack)return;
+    clearTimeout(catalogRetry);catalogLoading=true;
+    const request=++catalogGeneration;
+    clearCatalog();
     setMapStatus('加载地图…');
     let failureMessage='';
     try {
       const response=await RadarPages.fetch(resourceUrl('/atlas/manifest.json'),{cache:'no-store'});
+      if(request!==catalogGeneration)return;
       if(room&&response.status===401){location.assign('./?room='+room);return;}
-      if(!response.ok){
+      if(response.ok){
+        const value=await response.json();
+        if(request!==catalogGeneration)return;
+        if(validCatalog(value)){applyCatalog(value);return;}
+      }else{
         const failure=await response.json().catch(()=>null);
         if(typeof failure?.message==='string')failureMessage=failure.message.slice(0,512);
-        throw new Error('atlas unavailable');
       }
-      const value=await response.json();
-      if(!validCatalog(value))throw new Error('invalid atlas');
-      if(request!==catalogGeneration)return;
-      atlasRevision=typeof value.revision==='string'?value.revision:'';
-      atlas=value;maps=value.maps.map(item=>addOverview({...item,annotations:annotationModel.prepare(item.annotations)}));
-      if(!maps.some(item=>item.id===manualMapId))manualMapId='';
-      options('mapSelect',preview?maps:[{id:'auto',name:'跟随当前对局'},...maps]);
-      byId('mapCount').textContent=maps.length+' 张地图';
-      byId('sourceInfo').textContent=(value.region==='cn'?'国服':'国际服')+' · '+value.version+' · ';
-      byId('mapSelect').disabled=false;byId('floorSelect').disabled=is3d();
-      const id=preview?params.get('map'):manualMapId;
-      if(!preview&&!manualMapId&&lastPacket?.active===true&&lastPacket.region===atlas.region&&lastPacket.coordinateSpace==='ue-world-centimeters'&&
-         maps.some(item=>item.gameMapId===lastPacket.mapId))followMap();
-      else selectMap(maps.some(item=>item.id===id)?id:maps[0].id);
-      updateFrameStatus();
     }catch(_) {
-      if(request===catalogGeneration){
-        setMapStatus(failureMessage?'地图配置不可用：'+failureMessage:
-          room?'等待手机同步地图，完成后自动显示…':'地图配置不可用，请检查游戏资源。',!room);
-        if(room)catalogRetry=setTimeout(()=>{void loadCatalog();},5000);
-      }
+      // A network or JSON failure takes the same retry path as an unavailable catalog.
     }finally{if(request===catalogGeneration)catalogLoading=false;}
+    if(request!==catalogGeneration)return;
+    setMapStatus(failureMessage?'地图配置不可用：'+failureMessage:
+      room?'等待手机同步地图，完成后自动显示…':'地图配置不可用，请检查游戏资源。',!room);
+    if(room)catalogRetry=setTimeout(()=>{void loadCatalog();},5000);
+  }
+  async function selectMapPack(region) {
+    if(packLoad?.region===region)return;
+    packLoad?.controller.abort();
+    const status=byId('mapPackStatus');
+    const label=region==='cn'?'国服底图':'国际服底图';
+    if(activeMapPack?.catalog.region===region){
+      packLoad=null;
+      status.textContent=label+'已加载';
+      return;
+    }
+    const request={region,controller:new AbortController()};
+    packLoad=request;
+    const result=await mapPacks.load(region,request.controller.signal,validCatalog,text=>{
+      if(packLoad===request)status.textContent=label+' · '+text;
+    });
+    if(packLoad!==request){result.pack?.dispose();return;}
+    packLoad=null;
+    if(!result.pack){
+      status.textContent=label+' · '+(result.canceled?'加载已取消，可重新选择':result.error);
+      return;
+    }
+
+    ++catalogGeneration;catalogLoading=false;clearTimeout(catalogRetry);
+    clearCatalog();
+    activeMapPack?.dispose();
+    activeMapPack=result.pack;
+    applyCatalog(activeMapPack.catalog);
+    for(const button of mapPackButtons)button.setAttribute('aria-pressed',String(button.dataset.mapPack===region));
+    status.textContent=label+'已加载 · '+maps.length+' 张地图';
   }
   const available=value=>Number.isFinite(value)&&value>=0;
   function equipmentText(prefix,level,durability,showLevel,showDurability,missing='—') {
@@ -680,14 +726,12 @@
         disconnected('数据来源不匹配');return;
       }
       if(room&&packet.expired){setViewerCount(null);stream.close();location.assign('./?room='+room);return;}
-      if(room&&packet.atlasReady===false&&atlas){
-        ++catalogGeneration;++generation;catalogLoading=false;atlas=null;atlasRevision='';clearImages();clearMarkers();images.clear();
-        maps=[];selected=selectedFloor=null;
-        byId('mapSelect').disabled=true;byId('floorSelect').disabled=true;byId('fitMap').disabled=true;
+      if(room&&!activeMapPack&&packet.atlasReady===false&&atlas){
+        ++catalogGeneration;catalogLoading=false;atlasRevision='';clearCatalog();
         byId('mapName').textContent='等待地图';byId('captionName').textContent='';
         setMapStatus('等待手机同步地图…');clearTimeout(catalogRetry);catalogRetry=setTimeout(()=>{void loadCatalog();},5000);
       }
-      if(room&&packet.atlasReady&&packet.atlasRevision!==atlasRevision&&!catalogLoading)void loadCatalog();
+      if(room&&!activeMapPack&&packet.atlasReady&&packet.atlasRevision!==atlasRevision&&!catalogLoading)void loadCatalog();
       lastFrameAt=performance.now();lastPacket=packet;byId('connectionDot').classList.add('live');
       byId('connectionStatus').textContent=packet.active===true?'已连接':'等待对局';
       if(packet.active!==true)followedMapId=0;
@@ -736,7 +780,11 @@
     saveDisplay();if(key==='showNames'||key==='showExits')renderAnnotations();else renderMarkers();
   });
   for(const key of display3dKeys)byId(key).addEventListener('change',()=>{saveDisplay3d();if(is3d())renderMarkers();});
-  byId('retryMap').addEventListener('click',()=>{void loadCatalog();});
+  byId('retryMap').addEventListener('click',()=>{
+    if(activeMapPack&&selectedFloor)void selectFloor(selectedFloor.id);
+    else void loadCatalog();
+  });
+  for(const button of mapPackButtons)button.addEventListener('click',()=>{void selectMapPack(button.dataset.mapPack);});
   function setPanel(open) {
     byId('panel').hidden=!open;byId('menuToggle').setAttribute('aria-expanded',String(open));
     fit();
@@ -765,7 +813,9 @@
   selectPanelTab('map');
   let sceneTimer=setInterval(()=>{if(is3d())void refreshScene();},250);
   addEventListener('resize',()=>{fit();sceneRenderer?.resize();});
-  addEventListener('pagehide',()=>{setViewerCount(null);stream?.close();clearInterval(connectionTimer);clearTimeout(catalogRetry);clearInterval(sceneTimer);invalidateScene();sceneRenderer?.setVisible(false);});
+  addEventListener('pagehide',()=>{packLoad?.controller.abort();setViewerCount(null);stream?.close();clearInterval(connectionTimer);clearTimeout(catalogRetry);clearInterval(sceneTimer);invalidateScene();sceneRenderer?.setVisible(false);});
   addEventListener('pageshow',event=>{if(event.persisted){connect();sceneRenderer?.setVisible(is3d());clearInterval(sceneTimer);sceneTimer=setInterval(()=>{if(is3d())void refreshScene();},250);}});
-  connect();void loadCatalog();
+  connect();
+  if(preview&&mapPackButtons.length)setMapStatus('请选择国服或国际服底图');
+  else void loadCatalog();
 })();

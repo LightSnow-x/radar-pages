@@ -1,10 +1,10 @@
-.map-download-links {
+.map-pack-choices {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
-.map-download-links a {
+.map-pack-choices button {
   display: grid;
   place-items: center;
   min-height: 44px;
@@ -15,14 +15,20 @@
   color: #c5d3bb;
   font-size: 12px;
   text-align: center;
-  text-decoration: none;
+  cursor: pointer;
 }
 
-.map-download-links a:hover {
+.map-pack-choices button:hover {
   background: #bbc5a920;
 }
 
-.map-download-links a:focus-visible {
+.map-pack-choices button:focus-visible {
   outline: 2px solid #f1c699;
   outline-offset: 2px;
+}
+
+.map-pack-choices button[aria-pressed="true"] {
+  border-color: #ce9f6f;
+  background: #d29a6226;
+  color: #f1c699;
 }
