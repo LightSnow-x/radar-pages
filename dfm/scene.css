@@ -1,20 +1,36 @@
 #scene-view {position:fixed;inset:0;background:#11171b;overflow:hidden}
 .scene-mode-card {margin-top:-7px}
-#scene-canvas,#scene-markers {position:absolute;inset:0;width:100%;height:100%}
+#scene-canvas,#scene-decorations,#scene-markers {position:absolute;inset:0;width:100%;height:100%}
 #scene-canvas {touch-action:none;cursor:grab;visibility:hidden}
 #scene-canvas:active {cursor:grabbing}
 #scene-view.ready #scene-canvas {visibility:visible}
 #scene-canvas:focus-visible {outline:2px solid #00e79a;outline-offset:-2px}
-#scene-markers {pointer-events:none}
+#scene-decorations,#scene-markers {pointer-events:none}
+#scene-decorations {visibility:hidden}
+#scene-view.ready #scene-decorations {visibility:visible}
 #scene-fit,#scene-retry {padding:8px 12px;border:1px solid #88b6a155;border-radius:10px;background:#101e1b;color:#e7f0eb;font-size:12px;cursor:pointer}
 #scene-fit {position:absolute;top:16px;left:16px}
 #scene-fit:disabled {opacity:.55;cursor:default}
 .scene-feedback {position:absolute;bottom:max(16px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;width:max-content;max-width:calc(100% - 24px)}
 #scene-status {padding:8px 12px;border:1px solid #88b6a155;border-radius:10px;background:#101e1b;color:#e7f0eb;font-size:12px}
 #scene-status.error {color:#f8ccb0}
-.scene-marker {position:absolute;top:0;left:0;font:600 12px/1.3 system-ui,sans-serif;text-align:center;color:#f6fff9}
-.scene-marker-pin {position:absolute;transform:translate(-50%,-50%);min-width:12px;min-height:12px;padding:1px 3px;border:1px solid #fff9;border-radius:50%;background:#ee665e;box-shadow:0 1px 4px #000b}
-.scene-marker-pin.self {background:#00b97a}.scene-marker-pin.ally {background:#269b9c}.scene-marker-pin.bot {background:#6c7679}.scene-marker-pin.loot {background:#b48644}
-.scene-marker-label {position:absolute;bottom:10px;left:0;transform:translateX(-50%);min-width:20px;padding:3px 5px;white-space:nowrap;border-radius:5px;background:#101817df}
-.scene-marker-health {display:block;height:2px;margin-top:2px;background:linear-gradient(to right,#5ce08b var(--health),#94484a var(--health))}
+.scene-marker {--marker-color:#f66b62;position:absolute;top:0;left:0;font:650 13px/1.15 'Segoe UI','Microsoft YaHei',system-ui,sans-serif;text-align:center;color:#fff;text-shadow:-1px -1px 0 #111,1px -1px 0 #111,-1px 1px 0 #111,1px 1px 0 #111,0 1px 3px #000}
+.scene-marker.self {--marker-color:#58dbac}.scene-marker.ally {--marker-color:#65d9c1}.scene-marker.bot {--marker-color:#fff}.scene-marker.loot {--marker-color:#e2ba71}
+.scene-marker-pin {position:absolute;width:8px;height:8px;transform:translate(-50%,-50%);border:1px solid #111;border-radius:50%;background:var(--marker-color);box-shadow:0 0 0 1px #fff6}
+.scene-marker.loot .scene-marker-pin {width:7px;height:7px;border-radius:1px;transform:translate(-50%,-50%) rotate(45deg)}
+.scene-marker.box .scene-marker-pin {width:10px;height:7px;border-radius:2px}
+.scene-marker.avatar-live .scene-marker-pin {display:none}
+.scene-marker-label,.scene-marker-distance {position:absolute;left:0;transform:translateX(-50%);width:max-content;white-space:nowrap}
+.scene-marker-label {bottom:7px;display:grid;justify-items:center;gap:2px;max-width:min(260px,45vw)}
+.scene-marker-title,.scene-marker-gear {display:flex;align-items:baseline;gap:5px;max-width:100%;font-variant-numeric:tabular-nums}
+.scene-marker-title {font-size:15px}
+.scene-marker-team {flex:none;color:var(--marker-color)}
+.scene-marker-name,.scene-marker-operator {overflow:hidden;text-overflow:ellipsis}
+.scene-marker-operator {color:#ffff64}
+.scene-marker-extra,.scene-marker-distance {font-size:12px;color:#f0f5f3;font-variant-numeric:tabular-nums}
+.scene-marker-health {width:76px;height:5px;overflow:hidden;border:1px solid #171d19;border-radius:3px;background:#2a342f}
+.scene-marker-health-fill {display:block;height:100%}
+.scene-avatar-note:not(:empty) {display:flex;align-items:center;gap:8px;color:#b7c8c0;font-size:11px}
+.scene-avatar-note:has(#scene-avatar-status:not(:empty)) {margin-top:8px}
+#scene-avatar-retry {border:1px solid #88b6a155;border-radius:6px;padding:4px 7px;background:#101e1b;color:#e7f0eb;cursor:pointer}
 @media (max-width:480px) {#scene-fit {top:12px;left:10px}}

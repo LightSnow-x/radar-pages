@@ -44,13 +44,15 @@ export function drawFacingLight(ctx,x,y,angle,radius) {
   for(let i=1;i<=segments;++i)ctx.lineTo(...edge(start+i*step));
   ctx.strokeStyle='rgba(210,210,210,.39)';ctx.stroke();
 }
-function drawSquad(ctx,x,y,slot,selected) {
+function drawSquad(ctx,x,y,slot,selected,portrait) {
   ctx.beginPath();ctx.arc(x,y,10,0,2*Math.PI);
-  ctx.fillStyle=slot===0?'#42ed99':'#65d9c1';ctx.fill();
+  const havePortrait=slot===0&&portrait?.complete&&portrait.naturalWidth>0;
+  if(havePortrait){ctx.save();ctx.clip();ctx.drawImage(portrait,x-10,y-10,20,20);ctx.restore();}
+  else {ctx.fillStyle=slot===0?'#42ed99':'#65d9c1';ctx.fill();}
   ctx.lineWidth=2;ctx.strokeStyle='#102b26';ctx.stroke();
   if(selected){ctx.beginPath();ctx.arc(x,y,13,0,2*Math.PI);ctx.strokeStyle='#f5fff9';ctx.stroke();}
   ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 10px system-ui,sans-serif';
-  ctx.fillStyle='#09241b';ctx.fillText(slot===0?'我':'友'+slot,x,y);
+  if(!havePortrait){ctx.fillStyle='#09241b';ctx.fillText(slot===0?'我':'友'+slot,x,y);}
 }
 export function drawEnemy(ctx,x,y,hp,team,operator,helmet,armor,display=defaultDisplay) {
   const circle=(r,start=-Math.PI/2,end=Math.PI*1.5)=>{ctx.beginPath();ctx.arc(x,y,r,start,end);};
@@ -86,7 +88,7 @@ function openRoom() {
   const select=document.getElementById('mapSel'), tileStatus=document.getElementById('tile-status');
   const viewSelect=document.getElementById('viewSel');
   const menu=document.getElementById('sideMenu'), menuButton=document.getElementById('menuBtn');
-  const closeButton=menu.querySelector('.panel-close'), display={...defaultDisplay};
+  const closeButton=menu.querySelector('.panel-close'), display={...defaultDisplay,s3Avatar:true,s3Box:false,s3Ray:false,s3Distance:true};
   function showMenu(open) {
     menu.classList.toggle('open',open);menuButton.classList.toggle('open',open);
     menu.inert=!open;menu.setAttribute('aria-hidden',String(!open));menuButton.setAttribute('aria-expanded',String(open));
@@ -102,7 +104,7 @@ function openRoom() {
   const pane=map.createPane('enemies');pane.style.zIndex='450';pane.style.pointerEvents='none';
   const canvas=document.createElement('canvas');pane.appendChild(canvas);
   const ctx=canvas.getContext('2d');
-  let index=0, tileIndex=-1, layer, tileFailed=false, frame=null, lastFrame=0, dirty=false;
+  let index=0, tileIndex=-1, layer, tileFailed=false, frame=null, lastFrame=0, dirty=false, selfMarker;
   let selected='free',selectedLabel='',choices='';
   const viewName=slot=>slot===0?'自己':'队友 '+slot;
   function updateViews() {
@@ -137,15 +139,22 @@ function openRoom() {
   const viewLocation=v=>({id:v[0],x:v[2],y:v[3],z:v[5]});
   function redrawScene() {
     const markers=[];
+    const focus=selectedView();
+    const originView=selected==='free'?frame?.v?.find(v=>v[1]===0):focus;
+    const referenceZ=originView?.[5];
     for(const e of frame?.e||[]){
-      markers.push({x:e[0],y:e[1],z:e[8],kind:'enemy',label:display.sH?(e[4]||'未知干员'):'',
-        details:display.sAR?'头'+(e[5]??'—')+' / 甲'+(e[6]??'—'):'',
-        team:display.sTN?e[3]:null,health:display.sHP?e[2]:null});
+      const distance=display.s3Distance&&Number.isFinite(referenceZ)&&Number.isFinite(e[8])?
+        Math.hypot(e[0]-originView[2],e[1]-originView[3],e[8]-referenceZ)*.01:null;
+      markers.push({x:e[0],y:e[1],z:e[8],kind:'enemy',player:true,operator:display.sH?(e[4]||'未知干员'):'',
+        gear:display.sAR?[{label:'T:',tier:e[5]},{label:'H:',tier:e[6]}]:null,
+        team:display.sTN?'['+e[3]+']':'',health:display.sHP?e[2]:null,distance,
+        box:display.s3Box,ray:display.s3Ray,color:'#f66b62',
+        model:display.s3Avatar,standing:true,yaw:e[7],tint:[1,.2,.2]});
     }
     for(const v of frame?.v||[]){
-      markers.push({...viewLocation(v),kind:v[1]===0?'self':'ally',label:viewName(v[1])});
+      markers.push({...viewLocation(v),kind:v[1]===0?'self':'ally',label:viewName(v[1]),
+        model:display.s3Avatar,standing:true,yaw:v[4],tint:[.17,.74,.51]});
     }
-    const focus=selectedView();
     scene.update(frame?(frame.o??[]):null,markers,focus?viewLocation(focus):null);
   }
   function redraw() {
@@ -175,7 +184,10 @@ function openRoom() {
       drawFacingLight(ctx,pt.x,pt.y,facingAngle(index,v[4]),10);allies.push([pt,v]);
     }
     for(const [pt,e] of enemies)drawEnemy(ctx,pt.x,pt.y,e[2],e[3],e[4],e[5],e[6],display);
-    for(const [pt,v] of allies)drawSquad(ctx,pt.x,pt.y,v[1],String(v[0])===selected);
+    for(const [pt,v] of allies){
+      if(v[1]===0&&selfMarker===undefined)selfMarker=globalThis.DfmRadarAvatarPack?.marker(scheduleDraw)||null;
+      drawSquad(ctx,pt.x,pt.y,v[1],String(v[0])===selected,selfMarker);
+    }
   }
   function scheduleDraw() {if (!dirty) {dirty=true;requestAnimationFrame(redraw);}}
   for (const button of menu.querySelectorAll('[data-setting]')) {
@@ -184,6 +196,7 @@ function openRoom() {
       display[key]=!display[key];
       button.setAttribute('aria-checked',String(display[key]));
       button.querySelector('.sw-track').classList.toggle('on',display[key]);
+      if(key==='s3Avatar')scene?.setPosesEnabled(display.s3Avatar);
       scheduleDraw();
     });
   }
@@ -200,12 +213,16 @@ function openRoom() {
   }
   const scene=globalThis.DfmRadarScene?.create({
     onModeChange(three){
+      document.getElementById('scene-entities').hidden=!three;
+      document.getElementById('health-display-label').textContent=three?'血条':'血量圆环';
+      document.getElementById('radar-gesture').textContent=(three?'拖动旋转':'拖动平移')+' · 滚轮或双指缩放';
       tileStatus.hidden=three||!tileFailed;
       if(!three){loadTiles();map.invalidateSize({animate:false});follow();}
       scheduleDraw();
     },
     onFit(){selected='free';selectedLabel='';updateViews();scheduleDraw();},redraw:scheduleDraw
   });
+  scene?.setPosesEnabled(display.s3Avatar);
   function setMap(){
     const next=Number(select.value);
     if(!Number.isInteger(next)||!maps[next])return;
