@@ -126,6 +126,29 @@ function readModel(bytes) {
   return { meshes, instances };
 }
 
+function terrainBoundary(mesh) {
+  const count = mesh.vertices.length / 3;
+  const { indices } = mesh;
+  const edges = new Float64Array(indices.length);
+  const edge = (a, b) => Math.min(a, b) * count + Math.max(a, b);
+  for (let at = 0; at < indices.length; at += 3) {
+    const a = indices[at], b = indices[at + 1], c = indices[at + 2];
+    edges[at] = edge(a, b);
+    edges[at + 1] = edge(b, c);
+    edges[at + 2] = edge(c, a);
+  }
+
+  edges.sort();
+  const locked = new Uint8Array(count);
+  for (let at = 0; at < edges.length; ++at) {
+    const key = edges[at];
+    if (key === edges[at - 1] || key === edges[at + 1]) continue;
+    locked[Math.floor(key / count)] = 1;
+    locked[key % count] = 1;
+  }
+  return locked;
+}
+
 function simplifyMesh(mesh, spacing) {
   const { vertices, indices, minimum, maximum } = mesh;
   const span = maximum.map((value, axis) => value - minimum[axis]);
@@ -135,32 +158,40 @@ function simplifyMesh(mesh, spacing) {
   const remap = new Uint32Array(vertices.length / 3);
   const sums = new Float64Array(vertices.length), uses = new Uint32Array(remap.length);
   const cells = new Map();
+  // Neighboring terrain meshes are reduced independently and must retain their shared edges.
+  const locked = mesh.terrain ? (mesh.boundary ??= terrainBoundary(mesh)) : null;
+  let count = 0;
   for (let i = 0, at = 0; i < remap.length; ++i, at += 3) {
-    const x = Math.floor((vertices[at] - minimum[0]) / step);
-    const y = Math.floor((vertices[at + 1] - minimum[1]) / step);
-    const z = Math.floor((vertices[at + 2] - minimum[2]) / step);
-    const key = (x * dimensions[1] + y) * dimensions[2] + z;
-    let index = cells.get(key);
-    if (index === undefined) { index = cells.size; cells.set(key, index); }
+    let index;
+    if (locked?.[i]) {
+      index = count++;
+    } else {
+      const x = Math.floor((vertices[at] - minimum[0]) / step);
+      const y = Math.floor((vertices[at + 1] - minimum[1]) / step);
+      const z = Math.floor((vertices[at + 2] - minimum[2]) / step);
+      const key = (x * dimensions[1] + y) * dimensions[2] + z;
+      index = cells.get(key);
+      if (index === undefined) { index = count++; cells.set(key, index); }
+    }
     remap[i] = index;
     ++uses[index];
     for (let axis = 0; axis < 3; ++axis) sums[index * 3 + axis] += vertices[at + axis];
   }
-  if (cells.size < 3) return null;
-  if (cells.size === remap.length) return mesh;
+  if (count < 3) return null;
+  if (count === remap.length) return mesh;
 
-  const simplified = new Float32Array(cells.size * 3);
-  for (let index = 0; index < cells.size; ++index) {
+  const simplified = new Float32Array(count * 3);
+  for (let index = 0; index < count; ++index) {
     for (let axis = 0; axis < 3; ++axis) simplified[index * 3 + axis] = sums[index * 3 + axis] / uses[index];
   }
   const reduced = new Uint32Array(indices.length), seen = new Set();
-  const numeric = Number.isSafeInteger(cells.size ** 3);
+  const numeric = Number.isSafeInteger(count ** 3);
   let length = 0;
   for (let at = 0; at < indices.length; at += 3) {
     const a = remap[indices[at]], b = remap[indices[at + 1]], c = remap[indices[at + 2]];
     if (a === b || a === c || b === c) continue;
     const low = Math.min(a, b, c), high = Math.max(a, b, c), middle = a + b + c - low - high;
-    const key = numeric ? (low * cells.size + middle) * cells.size + high : `${low},${middle},${high}`;
+    const key = numeric ? (low * count + middle) * count + high : `${low},${middle},${high}`;
     if (seen.has(key)) continue;
     seen.add(key);
     reduced[length++] = a; reduced[length++] = b; reduced[length++] = c;
