@@ -1,17 +1,71 @@
 <!doctype html>
-<html lang="zh-CN"><head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#171b1b">
   <title>暗区突围 · 雷达房间</title>
-  <link rel="stylesheet" href="../entry.css"><script defer src="../entry.js"></script>
-</head><body><main class="room-entry">
-  <a href="../">返回游戏列表</a>
-  <img src="../portal-uam.webp" alt="" width="64" height="64" decoding="async">
-  <h1>暗区突围</h1>
-  <p>输入共享设备上的四位房间号。</p>
-  <form action="./view.html" method="get">
-    <label for="room">房间号</label>
-    <input id="room" name="room" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required>
-    <button type="submit">进入房间</button>
-  </form>
-  <p id="room-status" role="status"></p>
-</main></body></html>
+  <link rel="icon" type="image/png" href="./branding/aqtw-icon.png">
+  <link rel="stylesheet" href="./join.css">
+  <script defer src="../entry.js?v=20261120-room-design"></script>
+</head>
+<body>
+  <div class="battlefield" aria-hidden="true"></div>
+  <div class="field-overlay" aria-hidden="true"></div>
+  <svg class="glass-filters" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <defs>
+      <filter id="liquid-refraction" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="2" seed="8" result="ripple"/>
+        <feGaussianBlur in="ripple" stdDeviation="2" result="smoothRipple"/>
+        <feDisplacementMap in="SourceGraphic" in2="smoothRipple" scale="10" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+  </svg>
+  <header class="site-header">
+    <a class="site-brand" href="../" aria-label="暗区突围云端雷达首页">
+      <span class="game-wordmark" role="img" aria-label="暗区突围"></span>
+      <span class="site-brand-label">云端雷达</span>
+    </a>
+    <a class="official-link" href="https://aqtw.qq.com/web202206/index.html" target="_blank" rel="noopener noreferrer">游戏官网 <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M6 5h9v9M15 5 5 15"/></svg></a>
+  </header>
+  <main>
+    <section class="entry" aria-labelledby="entryTitle">
+      <div class="glass-refraction" aria-hidden="true"></div>
+      <div class="panel-bar"><span><i aria-hidden="true"></i> 房间接入</span><span>UAM / CLOUD RADAR</span></div>
+      <div class="entry-content">
+        <div class="game-identity">
+          <img class="game-icon" src="./branding/aqtw-icon.png" alt="暗区突围游戏图标" width="54" height="54">
+          <div><span class="game-wordmark" role="img" aria-label="暗区突围"></span><p>手游云端雷达 <span>/</span> 实时战术地图</p></div>
+        </div>
+        <div class="entry-heading">
+          <h1 id="entryTitle">进入雷达房间<span aria-hidden="true">.</span></h1>
+          <p class="hint">输入手机端设置的房间号，<br class="mobile-break">接入同一局战术地图。</p>
+        </div>
+        <form id="joinForm" action="./view.html" method="get" data-radar-entry data-room-hints>
+          <div class="field-heading">
+            <label for="roomCode"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="4" y="2" width="12" height="16" rx="2"/><path d="M8 5h4M9 15h2"/></svg>房间号</label>
+            <span id="roomHint">4 位数字 · 与手机端一致</span>
+          </div>
+          <input id="roomCode" name="room" type="text" inputmode="numeric" enterkeyhint="go" autocomplete="off" spellcheck="false" maxlength="4" pattern="[0-9]{4}" placeholder="0000" required aria-describedby="roomHint joinStatus">
+          <button id="joinButton" type="submit"><span class="button-label">连接雷达</span><span class="button-loading">正在连接</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></button>
+          <p id="joinStatus" data-room-status role="status" aria-live="polite" aria-atomic="true">等待输入房间号</p>
+        </form>
+        <details class="room-help">
+          <summary><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M8 7a2 2 0 0 1 4 0c0 2-2 2-2 4M10 14h.01"/></svg>房间号在哪里？<span class="help-toggle" aria-hidden="true">+</span></summary>
+          <p>在手机端选择「云端雷达」，设置 4 位房间号，然后在这里输入相同号码。连接期间，请保持手机端运行。</p>
+        </details>
+      </div>
+      <div class="connection-flow" aria-label="连接流程：手机开启云端雷达，使用房间号连接，地图自动同步">
+        <div class="flow-step"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 5h4M11 18h2"/></svg><span>手机开启</span></div>
+        <svg class="flow-arrow" viewBox="0 0 28 16" fill="none" aria-hidden="true"><path d="M1 8h24m-5-5 5 5-5 5"/></svg>
+        <div class="flow-step"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10 6H7a6 6 0 0 0 0 12h3m4-12h3a6 6 0 0 1 0 12h-3M7 12h10"/></svg><span>房间连接</span></div>
+        <svg class="flow-arrow" viewBox="0 0 28 16" fill="none" aria-hidden="true"><path d="M1 8h24m-5-5 5 5-5 5"/></svg>
+        <div class="flow-step"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2V5Zm6-2v16m6-14v16"/></svg><span>地图同步</span></div>
+      </div>
+      <div class="panel-foot"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8a5 5 0 0 1 9-3l1 2M13 8a5 5 0 0 1-9 3l-1-2M13 3v4H9M3 13V9h4"/></svg>保持手机端运行，地图与位置自动同步</div>
+    </section>
+  </main>
+  <footer class="site-footer"><span>UAM <b>/</b> 云端雷达</span><span>游戏图标与场景素材版权归腾讯所有</span></footer>
+  <noscript>请启用 JavaScript 后进入雷达房间。</noscript>
+</body>
+</html>

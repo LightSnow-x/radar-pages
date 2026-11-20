@@ -1,17 +1,24 @@
 <!doctype html>
-<html lang="zh-CN"><head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>三角洲行动 · 雷达房间</title>
-  <link rel="stylesheet" href="../entry.css"><script defer src="../entry.js"></script>
-</head><body><main class="room-entry">
-  <a href="../">返回游戏列表</a>
-  <img src="../portal-dfm.webp" alt="" width="64" height="64" decoding="async">
-  <h1>三角洲行动</h1>
-  <p>输入共享设备上的四位房间号。</p>
-  <form action="./view.html" method="get">
-    <label for="room">房间号</label>
-    <input id="room" name="room" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required>
-    <button type="submit">进入房间</button>
-  </form>
-  <p id="room-status" role="status"></p>
-</main></body></html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101917">
+  <title>三角洲行动 · 网页雷达</title>
+  <link rel="stylesheet" href="./web.css">
+  <script defer src="../entry.js?v=20261120-room-design"></script>
+</head>
+<body class="entry">
+  <a class="brand" href="../" aria-label="返回雷达大厅" style="color:inherit;text-decoration:none"><span class="sight" aria-hidden="true"></span>三角洲行动 <span class="brand-detail">网页雷达</span></a>
+  <main class="entry-main">
+    <form action="./view.html" method="get" data-radar-entry class="join-card">
+      <h1>加入雷达房间</h1>
+      <p>输入共享者提供的四位房间号，查看实时地图。</p>
+      <label for="room">房间号</label>
+      <input id="room" name="room" type="text" inputmode="numeric" autocomplete="off" pattern="[0-9]{4}" maxlength="4" minlength="4" placeholder="0000" required>
+      <div class="message" data-room-status role="alert"></div>
+      <button type="submit">进入房间 <span aria-hidden="true">→</span></button>
+    </form>
+  </main>
+</body>
+</html>

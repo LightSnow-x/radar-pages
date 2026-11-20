@@ -1,17 +1,63 @@
 <!doctype html>
-<html lang="zh-CN"><head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>无畏契约：源能行动 · 雷达房间</title>
-  <link rel="stylesheet" href="../entry.css"><script defer src="../entry.js"></script>
-</head><body><main class="room-entry">
-  <a href="../">返回游戏列表</a>
-  <img src="../portal-valorant.webp" alt="" width="64" height="64" decoding="async">
-  <h1>无畏契约：源能行动</h1>
-  <p>输入共享设备上的四位房间号。</p>
-  <form action="./view.html" method="get">
-    <label for="room">房间号</label>
-    <input id="room" name="room" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required>
-    <button type="submit">进入房间</button>
-  </form>
-  <p id="room-status" role="status"></p>
-</main></body></html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b151f">
+  <title>网页雷达 · 无畏契约：源能行动</title>
+  <link rel="icon" type="image/jpeg" href="./branding/app-icon.jpg">
+  <link rel="preload" as="image" href="./branding/ascent.webp">
+  <link rel="stylesheet" href="./radar.css">
+  <link rel="stylesheet" href="./join.css">
+  <script defer src="../entry.js?v=20261120-room-design"></script>
+</head>
+<body class="entry">
+  <header class="entry-bar">
+    <div class="bar-inner">
+      <a class="entry-brand" href="../" aria-label="无畏契约：源能行动网页雷达首页"><img src="./branding/wordmark.png" width="994" height="217" alt="无畏契约：源能行动"></a>
+      <span class="bar-title">网页雷达</span>
+      <a class="official-link" href="https://valm.qq.com/main.html" rel="noopener noreferrer" target="_blank">游戏官网<svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h11v11m0-11L6 18"/></svg></a>
+    </div>
+  </header>
+  <main class="entry-scene">
+    <div class="entry-stage">
+      <figure class="agent-poster">
+        <svg class="poster-marks" viewBox="0 0 400 600" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M234 24h104L103 359v-94z" fill="currentColor" opacity=".18"/>
+          <path d="M363 24h23L231 245h-25z" fill="currentColor" opacity=".64"/>
+          <path d="M45 310v-55L221 4M155 589h73l107-152" fill="none" stroke="currentColor" opacity=".48"/>
+        </svg>
+        <img class="agent-image" src="./branding/sage.webp" alt="" width="768" height="1152">
+        <figcaption class="agent-caption">
+          <span class="role"><svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 8 3v7c0 4-4.6 8-8 10-3.4-2-8-6-8-10V5z"/><path d="m8.5 9.5 3.5 3 3.5-3"/></svg>哨卫</span>
+          <span class="agent-name">贤者 <span lang="en">SAGE</span></span>
+        </figcaption>
+      </figure>
+      <section class="entry-sheet" aria-labelledby="join-title">
+        <div class="sheet-top">
+          <span class="radar-sign" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none"><path d="M26.4 16a10.4 10.4 0 1 1-10.4-10.4m6.2 10.4a6.2 6.2 0 1 1-6.2-6.2M16 16 27 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"/><circle cx="11.5" cy="21.2" r="1.8" fill="currentColor"/><circle cx="16" cy="16" r="2" fill="currentColor"/></svg>
+          </span>
+          <span class="sheet-rule" aria-hidden="true"></span>
+        </div>
+        <h1 id="join-title">进入雷达房间</h1>
+        <p class="join-intro">与游戏设备连接，同步查看当前对局的战术地图。</p>
+        <form action="./view.html" method="get" data-radar-entry>
+          <div class="field-title"><label for="room">房间号</label><span id="room-hint">4 位数字</span></div>
+          <div class="code-control">
+            <svg class="glyph keypad" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="2.5" width="15" height="19" rx="2"/><path d="M8 6.5h8"/><path d="M8.5 11h.2m3.2 0h.2m3.2 0h.2m-7 4h.2m3.2 0h.2m3.2 0h.2" stroke-width="2.3" stroke-linecap="round"/></svg>
+            <input id="room" name="room" type="text" inputmode="numeric" enterkeyhint="go" pattern="[0-9]{4}" minlength="4" maxlength="4" autocomplete="off" spellcheck="false" required placeholder="0000" aria-describedby="room-hint room-error">
+          </div>
+          <p id="room-error" data-room-status role="status" aria-live="polite" aria-atomic="true"></p>
+          <button class="join-button" type="submit"><span>进入雷达</span><svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h6v18h-6M3 12h12m-5-5 5 5-5 5"/></svg></button>
+        </form>
+        <details class="room-help">
+          <summary><svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2" width="11" height="20" rx="2"/><path d="M10 5h4m-3 14h2"/></svg><span>房间号在哪里？</span><svg class="glyph help-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+          <p>在游戏设备上打开「雷达共享 → 网页雷达」，设置四位房间号并开启共享，然后在这里输入同一号码。</p>
+        </details>
+      </section>
+      <div class="map-caption"><svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 10c0 5-7 12-7 12S5 15 5 10a7 7 0 0 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>场景地图</span><strong>亚海悬城</strong></div>
+    </div>
+  </main>
+</body>
+</html>

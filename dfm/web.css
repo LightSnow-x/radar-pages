@@ -13,7 +13,7 @@ body { margin: 0; }
   min-height: 100vh; min-height: 100svh;
   display: flex; flex-direction: column;
   background: linear-gradient(90deg, #08131024, #08131044 40%, #0a1513f5 87%),
-              linear-gradient(0deg, #081310af, transparent 46%), #101917 url("/dfm/entry.jpg") 32% center / cover;
+              linear-gradient(0deg, #081310af, transparent 46%), #101917 url("./entry.jpg") 32% center / cover;
 }
 .brand { display: flex; align-items: center; border-bottom: 1px solid var(--line); }
 .brand { padding: 24px clamp(24px,5vw,84px); gap: 14px; background: #0a151ab8; font-size: 22px; font-weight: 700; }

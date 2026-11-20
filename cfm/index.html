@@ -1,17 +1,36 @@
 <!doctype html>
-<html lang="zh-CN"><head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>穿越火线：枪战王者 · 雷达房间</title>
-  <link rel="stylesheet" href="../entry.css"><script defer src="../entry.js"></script>
-</head><body><main class="room-entry">
-  <a href="../">返回游戏列表</a>
-  <img src="../portal-cfm.webp" alt="" width="64" height="64" decoding="async">
-  <h1>穿越火线：枪战王者</h1>
-  <p>输入共享设备上的四位房间号。</p>
-  <form action="./view.html" method="get">
-    <label for="room">房间号</label>
-    <input id="room" name="room" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required>
-    <button type="submit">进入房间</button>
-  </form>
-  <p id="room-status" role="status"></p>
-</main></body></html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="dark"><meta name="theme-color" content="#12151a"><meta name="referrer" content="no-referrer">
+  <title>CFM · 登录火线雷达</title>
+  <link rel="icon" href="./cfm-icon.png"><link rel="stylesheet" href="./radar.css">
+  <script defer src="../entry.js?v=20261120-room-design"></script>
+</head>
+<body class="cfm-login cfm-cloud-login">
+  <header class="login-masthead"><a href="../" aria-label="返回雷达大厅" style="display:flex"><img src="./cfm-icon.png" alt="穿越火线：枪战王者" width="44" height="45"></a><div><strong>穿越火线 <span>枪战王者</span></strong><small>CROSSFIRE MOBILE</small></div><span class="local-tag">云端共享</span></header>
+  <main class="login-center">
+    <div class="login-wordmark" aria-hidden="true">CF<span>M</span><i>TACTICAL RADAR</i></div>
+    <section class="login-terminal" aria-labelledby="login-title">
+      <div class="terminal-edge"><span>火线雷达</span><span>房间接入</span></div>
+      <div class="login-terminal-body">
+        <div class="login-title-row"><h1 id="login-title">登录战术地图</h1><span id="cfm-login-state" class="state-tag" data-state="waiting"><i></i><span>等待房间</span></span></div>
+        <p class="login-copy">输入房间号，跨网络查看 CFM 当前对局。</p>
+        <form action="./view.html" method="get" data-radar-entry data-complete-room><div id="cfm-room-entry" class="room-entry">
+          <label for="cfm-room">四位房间号</label>
+          <input id="cfm-room" name="room" type="text" required inputmode="numeric" autocomplete="off" maxlength="4" pattern="[0-9]{4}" placeholder="0000" aria-describedby="cfm-login-message">
+          <small>输入游戏设备中设置的房间号</small>
+        </div>
+        <div class="login-device" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 5h4m-3 14h2"/></svg><div><label>游戏设备</label><strong id="cfm-login-address">—</strong></div></div>
+        <div class="login-match" hidden><span>当前地图</span><strong id="cfm-login-map">等待设备</strong></div>
+        <button id="cfm-connect" class="connect-button" type="submit"><span>进入云端雷达</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></button>
+        <p id="cfm-login-message" class="login-message" role="status" data-room-status>请输入设备上显示的四位房间号，支持 0000。</p></form>
+      </div>
+      <div class="terminal-bottom"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8a14 14 0 0 1 18 0M6 12a9 9 0 0 1 12 0m-9 4a4 4 0 0 1 6 0"/><circle cx="12" cy="20" r="1"/></svg><span>CFM 云端房间 · 无需游戏账号</span></div>
+    </section>
+    <p class="login-instruction">在游戏设备的「雷达 → 共享雷达」开启云端共享，并保持程序运行。</p>
+  </main>
+  <footer class="login-footer"><span>CFM / 火线雷达</span><a href="https://cfm.qq.com/main.shtml" target="_blank" rel="noopener noreferrer">CFM 官方视觉素材 ↗</a></footer>
+  <noscript>请开启 JavaScript，以查看云端雷达。</noscript>
+</body>
+</html>
