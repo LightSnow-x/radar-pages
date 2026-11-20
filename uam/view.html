@@ -15,9 +15,8 @@
   <script defer src="radar-3d.js"></script>
   <script defer src="radar-avatar.js"></script>
   <script defer src="vendor/fflate-0.8.3.js"></script>
-  <script defer src="map-packs.js"></script>
-  <script defer src="radar.js?v=map-packs"></script>
-  <link rel="stylesheet" href="map-downloads.css?v=map-packs">
+  <script defer src="map-pack.js"></script>
+  <script defer src="radar.js?v=default-map-pack"></script>
 </head>
 <body>
   <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
@@ -79,14 +78,6 @@
           <div class="floor-controls"><select id="floorSelect"></select><button id="fitMap" type="button" title="将当前楼层完整显示在可见区域"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-fit"/></svg><span id="fitLabel">全图</span></button></div>
           <button id="retryMap" class="retry-button" type="button" hidden>重新加载地图</button>
           <p id="mapStatus" role="status" aria-live="polite">加载地图…</p>
-        </section>
-        <section class="control-section" aria-labelledby="mapPackTitle">
-          <div class="section-heading"><h2 id="mapPackTitle">加载 2D 底图</h2></div>
-          <div id="mapPackChoices" class="map-pack-choices">
-            <button type="button" data-map-pack="cn" aria-pressed="false">国服底图</button>
-            <button type="button" data-map-pack="global" aria-pressed="false">国际服底图</button>
-          </div>
-          <p id="mapPackStatus" class="section-note" role="status"></p>
         </section>
         <section id="annotationControls" class="control-section" aria-labelledby="annotationTitle">
           <div class="section-heading"><h2 id="annotationTitle">地图标注</h2><span class="section-caption">区域与撤离</span></div>

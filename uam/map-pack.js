@@ -1,17 +1,15 @@
 (() => {
   'use strict';
 
-  const packages = new Map([
-    ['cn', { version: '1.0.168.168', bytes: 54744962,
-      url: 'https://media.meilinvps.com/f.php?id=vB21DUi87RxC.zip' }],
-    ['global', { version: '1.0.516.516', bytes: 31456411,
-      url: 'https://media.meilinvps.com/f.php?id=s9JVIa5zdyZu.zip' }],
-  ]);
+  const source = {
+    version: '1.0.168.168', bytes: 54744962,
+    url: 'https://media.meilinvps.com/f.php?id=vB21DUi87RxC.zip',
+  };
   const imagePrefix = '/atlas/image/';
   const maxPngBytes = 4 * 1024 * 1024;
   const maxAtlasBytes = 96 * 1024 * 1024;
 
-  async function downloadZip(source, signal, report) {
+  async function downloadZip(signal, report) {
     const response = await fetch(source.url, { signal, credentials: 'omit' });
     if (!response.ok || !response.body) return null;
 
@@ -86,8 +84,14 @@
 
   function createPack(catalog, files) {
     const urls = new Map();
+    const cnMaps = new Set(catalog.maps.map(map => map.gameMapId));
+    const globalMaps = new Set(catalog.sharedGlobalMapIds);
     return {
       catalog,
+      supports(packet) {
+        if (packet.region === 'cn') return cnMaps.has(packet.mapId);
+        return packet.region === 'global' && globalMaps.has(packet.mapId);
+      },
       imageUrl(file) {
         const bytes = files?.[file.slice(imagePrefix.length)];
         if (!bytes) return '';
@@ -102,24 +106,23 @@
     };
   }
 
-  async function load(region, signal, validCatalog, report) {
-    const source = packages.get(region);
-    if (!source) return { error: '没有对应区服的底图包' };
+  async function load(signal, validCatalog, report) {
     if (typeof globalThis.fflate?.unzip !== 'function') return { error: '解包组件加载失败，请刷新页面' };
 
     let failure = '清单读取失败，请重试';
     try {
       report('读取地图清单…');
-      const response = await fetch('map-packs/' + region + '-' + source.version + '.json', { signal });
+      const response = await fetch('map-pack.json', { signal });
       if (!response.ok) return { error: failure };
       const catalog = await response.json();
-      if (!validCatalog(catalog) || catalog.region !== region || catalog.version !== source.version) {
+      if (!validCatalog(catalog) || catalog.region !== 'cn' || catalog.version !== source.version ||
+          !Array.isArray(catalog.sharedGlobalMapIds)) {
         return { error: '地图清单与底图包版本不符' };
       }
 
       failure = '底图包下载失败，请重试';
       report('下载中 0%');
-      const bytes = await downloadZip(source, signal, report);
+      const bytes = await downloadZip(signal, report);
       if (!bytes) return { error: failure };
 
       const expected = new Map(catalog.maps.flatMap(map => map.layers.flatMap(layer =>
@@ -135,5 +138,5 @@
     }
   }
 
-  globalThis.UamRadarMapPacks = { load };
+  globalThis.UamRadarMapPack = { load };
 })();
