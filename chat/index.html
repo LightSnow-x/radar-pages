@@ -2,39 +2,62 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="referrer" content="no-referrer">
   <title>同行聊天室</title>
-  <link rel="stylesheet" href="../entry.css">
-  <link rel="stylesheet" href="./peer-chat.css">
-  <script defer src="./peer-chat.js" data-endpoint="ws://103.236.84.5:19558/radar-ws"></script>
+  <link rel="stylesheet" href="./room.css">
+  <script defer src="./room.js" data-endpoint="ws://103.236.84.5:19558/radar-ws"></script>
 </head>
-<body>
-  <main class="room-entry peer-chat">
-    <a href="../">返回大厅</a>
-    <h1>同行聊天室</h1>
-    <p id="chat-status" role="status">选择游戏，输入 Worker 弹窗显示的同行房间号。</p>
-    <form id="join-room">
-      <label for="game">游戏</label>
-      <select id="game" name="game">
-        <option value="dfm/cn">三角洲行动</option>
-        <option value="uam/cn">暗区突围 · 国服</option>
-        <option value="uam/global">暗区突围 · 国际服</option>
-      </select>
-      <label for="room">同行房间号</label>
-      <input id="room" name="room" inputmode="numeric" pattern="[1-9][0-9]{0,19}" maxlength="20" autocomplete="off" required>
-      <button id="join" type="submit">进入聊天室</button>
-    </form>
+<body data-game="uam" data-view="entry">
+  <header class="site-header">
+    <span class="uam-wordmark" role="img" aria-label="暗区突围"></span>
+    <span class="dfm-wordmark">三角洲行动</span>
+    <a class="back-link" href="../"><span aria-hidden="true">‹</span> 返回雷达大厅</a>
+  </header>
+  <main class="chat-shell">
+    <section id="access-panel" aria-labelledby="access-title">
+      <h1 id="access-title" tabindex="-1">同行聊天室</h1>
+      <p class="access-hint">选择游戏，输入 Worker 弹窗上的同行房号。</p>
+      <form id="join-room">
+        <label for="game">游戏与区服</label>
+        <select id="game" name="game">
+          <option value="uam/cn">暗区突围 · 国服</option>
+          <option value="uam/global">暗区突围 · 国际服</option>
+          <option value="dfm/cn">三角洲行动</option>
+        </select>
+        <label for="room">同行房间号</label>
+        <input id="room" name="room" inputmode="numeric" enterkeyhint="go" pattern="[1-9][0-9]{0,19}" maxlength="20" autocomplete="off" spellcheck="false" placeholder="输入同行房号" required>
+        <details class="member-fields">
+          <summary>使用个人进房码</summary>
+          <label for="member-code">个人进房码</label>
+          <input id="member-code" inputmode="numeric" pattern="[1-9][0-9]{11}" maxlength="12" autocomplete="off" spellcheck="false" placeholder="Worker 弹窗上的 12 位数字" aria-describedby="member-hint">
+          <p id="member-hint">填入自己的个人码，消息会显示你的游戏内名称。</p>
+        </details>
+        <button id="join" class="primary-button" type="submit">进入聊天室</button>
+        <p id="chat-status" class="status-note" role="status"></p>
+      </form>
+    </section>
     <section id="conversation" aria-labelledby="room-heading" hidden>
       <div class="conversation-header">
-        <h2 id="room-heading"></h2>
-        <button id="leave" type="button">退出</button>
+        <div class="room-title">
+          <h1 id="room-heading" tabindex="-1">同行聊天室</h1>
+          <p id="room-game"></p>
+        </div>
+        <span class="connection-state">已连接</span>
+        <button id="leave" class="secondary-button" type="button">退出</button>
       </div>
-      <ol id="messages" role="log" aria-label="聊天消息" aria-relevant="additions"></ol>
+      <div class="room-details"><span>同行房号 <code id="room-number"></code></span><span>发言身份 <strong id="room-member"></strong></span></div>
+      <div class="message-window">
+        <p id="empty-chat" class="empty-chat">还没有消息。可以先发一条消息。</p>
+        <ol id="messages" role="log" aria-label="聊天消息" aria-relevant="additions"></ol>
+      </div>
       <form id="send-message">
-        <label for="message">消息</label>
-        <input id="message" name="message" maxlength="300" autocomplete="off" required>
-        <button type="submit">发送</button>
+        <div class="composer-row">
+          <label for="message" class="visually-hidden">消息</label>
+          <input id="message" name="message" maxlength="300" enterkeyhint="send" autocomplete="off" placeholder="输入消息…" required>
+          <button id="send" class="primary-button" type="submit" disabled>发送</button>
+        </div>
+        <p id="send-status" class="status-note" role="status"></p>
       </form>
     </section>
   </main>
