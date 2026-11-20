@@ -43,7 +43,21 @@ body[data-game="uam"] {
   --sent-line: #a06747;
 }
 
-body[data-game="uam"]::before, body[data-game="uam"]::after {
+body[data-game="dfm"] {
+  --ink: #ecf6ef;
+  --muted: #b3c5b9;
+  --panel: #14251eeb;
+  --inset: #0d1b16;
+  --line: #3d5749;
+  --accent: #83eab4;
+  --accent-deep: #4ec794;
+  --button-ink: #09251a;
+  --received: #26372f;
+  --sent: #20503a;
+  --sent-line: #5b9c76;
+}
+
+body[data-game]::before, body[data-game]::after {
   content: "";
   position: fixed;
   inset: 0;
@@ -59,6 +73,16 @@ body[data-game="uam"]::before {
 body[data-game="uam"]::after {
   background: linear-gradient(180deg, #0d1517b8, #111c1c71 38%, #0d1417d9),
     linear-gradient(90deg, #0b1718a6, transparent 47%, #0b17188c);
+}
+
+body[data-game="dfm"]::before {
+  background: #101917 url("../dfm/entry.jpg") center 42% / cover no-repeat;
+  filter: saturate(.42);
+}
+
+body[data-game="dfm"]::after {
+  background: linear-gradient(180deg, #0b1915c9, #0d21176e 42%, #08130fee),
+    linear-gradient(90deg, #12302355, #0b1c1685);
 }
 
 .site-header {
@@ -78,9 +102,23 @@ body[data-game="uam"]::after {
   background: url("../uam/branding/aqtw-header.png") left top / 438.2px 31px no-repeat;
 }
 
-.dfm-wordmark { font-size: 1.13rem; font-weight: 700; }
+.dfm-wordmark { display: inline-flex; align-items: center; gap: .72rem; font-size: 1.13rem; font-weight: 700; }
+.dfm-wordmark::before {
+  content: "";
+  width: .65rem;
+  height: .65rem;
+  border: 2px solid var(--accent);
+  transform: rotate(45deg);
+}
 body[data-game="uam"] .dfm-wordmark,
 body:not([data-game="uam"]) .uam-wordmark { display: none; }
+
+body[data-game="dfm"] .site-header { background: #0b1a14a8; border-color: #83bd9b36; }
+body[data-game="dfm"] .message-window {
+  background: radial-gradient(ellipse at 92% 0, #20433266, transparent 58%), var(--inset);
+}
+body[data-game="dfm"] .connection-state { color: #c6e3cf; }
+body[data-game="dfm"] .connection-state::before { background: var(--accent); }
 
 .back-link {
   display: inline-flex;

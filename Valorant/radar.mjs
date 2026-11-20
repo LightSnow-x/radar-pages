@@ -1,3 +1,4 @@
+const pagesMaps = new Map([["/maps/1.png","maps/1.png"],["/maps/2.png","maps/2.png"],["/maps/97.png","maps/97.png"],["/maps/99.png","maps/99.png"],["/maps/100.png","maps/99.png"],["/maps/109.png","maps/109.png"],["/maps/113.png","maps/113.png"],["/maps/114.png","maps/114.png"],["/maps/116.png","maps/116.png"],["/maps/117.png","maps/117.png"],["/maps/120.png","maps/120.png"],["/maps/1003.png","maps/1003.png"],["/maps/1004.png","maps/1004.png"],["/maps/1005.png","maps/1005.png"],["/maps/1006.png","maps/1006.png"],["/maps/1007.png","maps/1007.png"],["/maps/1009.png","maps/1009.png"],["/maps/1010.png","maps/1010.png"],["/maps/1011.png","maps/1011.png"],["/maps/1012.png","maps/1012.png"],["/maps/1013.png","maps/1013.png"],["/maps/5001.png","maps/5001.png"],["/maps/5002.png","maps/5002.png"],["/maps/5003.png","maps/5003.png"]]);
 const inside = value => Number.isFinite(value) && value >= 0 && value <= 1;
 export const validPosition = value => !!value && inside(value.u) && inside(value.v);
 export const validFrame = frame => frame?.game === 'valorant' && frame.schema === 1 &&
@@ -168,7 +169,18 @@ function mountRadar() {
         entry.loading = null; entry.retryAt = performance.now() + entry.delay;
         entry.delay = Math.min(8000, entry.delay * 2); paint();
       };
-      RadarPages.setImage(image, path.slice(1));
+      const staticPath = pagesMaps.get(path);
+      if (staticPath) {
+        const failed = image.onerror;
+        image.onerror = () => {
+          if (images.get(path) !== entry) return;
+          image.onerror = failed;
+          RadarPages.setImage(image, path.slice(1));
+        };
+        image.src = staticPath;
+      } else {
+        RadarPages.setImage(image, path.slice(1));
+      }
     }
     return entry.image;
   }
