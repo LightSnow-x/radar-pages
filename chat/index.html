@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="referrer" content="no-referrer">
   <title>同行聊天室</title>
-  <link rel="stylesheet" href="./room.css?v=20261120-dfm">
-  <script defer src="./room.js" data-endpoint="ws://103.236.84.5:19558/radar-ws"></script>
+  <link rel="stylesheet" href="./room.css?v=20261120-chat-count">
+  <script defer src="./room-join.js" data-endpoint="ws://103.236.84.5:19558/radar-ws"></script>
 </head>
 <body data-game="uam" data-view="entry">
   <header class="site-header">
@@ -17,7 +17,7 @@
   <main class="chat-shell">
     <section id="access-panel" aria-labelledby="access-title">
       <h1 id="access-title" tabindex="-1">同行聊天室</h1>
-      <p class="access-hint">选择游戏，输入 Worker 弹窗上的同行房号。</p>
+      <p class="access-hint">选择游戏，输入自己 Worker 弹窗上的同行房号。</p>
       <form id="join-room">
         <label for="game">游戏与区服</label>
         <select id="game" name="game">
@@ -26,13 +26,7 @@
           <option value="dfm/cn">三角洲行动</option>
         </select>
         <label for="room">同行房间号</label>
-        <input id="room" name="room" inputmode="numeric" enterkeyhint="go" pattern="[1-9][0-9]{0,19}" maxlength="20" autocomplete="off" spellcheck="false" placeholder="输入同行房号" required>
-        <details class="member-fields">
-          <summary>使用个人进房码</summary>
-          <label for="member-code">个人进房码</label>
-          <input id="member-code" inputmode="numeric" pattern="[1-9][0-9]{11}" maxlength="12" autocomplete="off" spellcheck="false" placeholder="Worker 弹窗上的 12 位数字" aria-describedby="member-hint">
-          <p id="member-hint">填入自己的个人码，消息会显示你的游戏内名称。</p>
-        </details>
+        <input id="room" name="room" inputmode="numeric" enterkeyhint="go" pattern="(0[1-9][0-9]{11}|[1-9][0-9]{0,19})" maxlength="20" autocomplete="off" spellcheck="false" placeholder="输入同行房号" required>
         <button id="join" class="primary-button" type="submit">进入聊天室</button>
         <p id="chat-status" class="status-note" role="status"></p>
       </form>
@@ -46,7 +40,7 @@
         <span class="connection-state">已连接</span>
         <button id="leave" class="secondary-button" type="button">退出</button>
       </div>
-      <div class="room-details"><span>同行房号 <code id="room-number"></code></span><span>发言身份 <strong id="room-member"></strong></span></div>
+      <div class="room-details"><span>我的名称 <strong id="room-member"></strong></span><span id="room-count" role="status"></span></div>
       <div class="message-window">
         <p id="empty-chat" class="empty-chat">还没有消息。可以先发一条消息。</p>
         <ol id="messages" role="log" aria-label="聊天消息" aria-relevant="additions"></ol>
