@@ -9,10 +9,9 @@
   let imageLayers=[],lastPacket=null,lastFrameAt=0,connectionTimer,followedMapId=0;
   let atlasRevision='',catalogRetry,catalogLoading=false,manualMapId='';
   const mapPackLoader=globalThis.UamRadarMapPack;
-  let mapPack=null,mapPackRequest=null;
+  let mapPack=null,mapPackRequest=null,failedPackRegion='';
   const usesMapPack=()=>mapPack&&atlas===mapPack.catalog;
   const matchesAtlas=packet=>packet.region===atlas.region||(usesMapPack()&&mapPack.supports(packet));
-  const preferMapPack=packet=>mapPack&&(!packet?.active||mapPack.supports(packet)||!packet.atlasReady);
   let viewMode='2d',followId='self',follow2d=false,rosterKey='',rosterSession='';
   const is3d=()=>viewMode!=='2d';
   let sceneRenderer=null,sceneKey='',sceneGeneration=0,sceneAbort=null,sceneBusy=false,nextSceneFetch=0;
@@ -261,27 +260,20 @@
     updateFrameStatus();
   }
   async function loadCatalog() {
-    if(preferMapPack(lastPacket))return;
+    if(mapPackLoader)return;
     clearTimeout(catalogRetry);catalogLoading=true;
     const request=++catalogGeneration;
-    const keepMapPackVisible=usesMapPack();
-    if(!keepMapPackVisible){
-      clearCatalog();
-      setMapStatus('加载地图…');
-    }
+    clearCatalog();
+    setMapStatus('加载地图…');
     let failureMessage='';
     try {
       const response=await RadarPages.fetch(resourceUrl('/atlas/manifest.json'),{cache:'no-store'});
-      if(request!==catalogGeneration||preferMapPack(lastPacket))return;
+      if(request!==catalogGeneration)return;
       if(room&&response.status===401){location.assign('./?room='+room);return;}
       if(response.ok){
         const value=await response.json();
-        if(request!==catalogGeneration||preferMapPack(lastPacket))return;
-        if(validCatalog(value)){
-          if(keepMapPackVisible)clearCatalog();
-          applyCatalog(value);
-          return;
-        }
+        if(request!==catalogGeneration)return;
+        if(validCatalog(value)){applyCatalog(value);return;}
       }else{
         const failure=await response.json().catch(()=>null);
         if(typeof failure?.message==='string')failureMessage=failure.message.slice(0,512);
@@ -289,34 +281,37 @@
     }catch(_) {
       // A network or JSON failure takes the same retry path as an unavailable catalog.
     }finally{if(request===catalogGeneration)catalogLoading=false;}
-    if(request!==catalogGeneration||preferMapPack(lastPacket))return;
-    if(!keepMapPackVisible){
-      setMapStatus(failureMessage?'地图配置不可用：'+failureMessage:
-        room?'等待手机同步地图，完成后自动显示…':'地图配置不可用，请检查游戏资源。',!room);
-    }
+    if(request!==catalogGeneration)return;
+    setMapStatus(failureMessage?'地图配置不可用：'+failureMessage:
+      room?'等待手机同步地图，完成后自动显示…':'地图配置不可用，请检查游戏资源。',!room);
     if(room)catalogRetry=setTimeout(()=>{void loadCatalog();},5000);
   }
-  function showMapPack() {
-    ++catalogGeneration;catalogLoading=false;clearTimeout(catalogRetry);
-    clearCatalog();
-    applyCatalog(mapPack.catalog);
+  function requiredPackRegion(packet) {
+    const current=mapPack?.catalog.region||'cn';
+    if(!validLivePacket(packet))return current;
+    if(packet.region==='cn')return 'cn';
+    return mapPack&&!mapPack.supports(packet)?'global':current;
   }
-  async function loadMapPack() {
-    if(mapPack||mapPackRequest)return;
-    const request=new AbortController();
+  async function loadMapPack(region=requiredPackRegion(lastPacket)) {
+    if(mapPack?.catalog.region===region||mapPackRequest)return;
+    const request={region,controller:new AbortController()};
     mapPackRequest=request;
-    const result=await mapPackLoader.load(request.signal,validCatalog,text=>{
-      if(mapPackRequest===request)setMapStatus('国服底图 · '+text);
-    });
+    failedPackRegion='';
+    const label=region==='cn'?'国服底图':'国际服底图';
+    const result=await mapPackLoader.load(request.controller.signal,validCatalog,text=>{
+      if(mapPackRequest===request)setMapStatus(label+' · '+text);
+    },region);
     if(mapPackRequest!==request){result.pack?.dispose();return;}
     mapPackRequest=null;
     if(!result.pack){
-      setMapStatus('国服底图 · '+(result.canceled?'加载已取消，请重试':result.error),true);
-      if(room&&lastPacket?.atlasReady)void loadCatalog();
+      failedPackRegion=region;
+      setMapStatus(label+' · '+(result.canceled?'加载已取消，请重试':result.error),true);
       return;
     }
+    clearCatalog();
+    mapPack?.dispose();
     mapPack=result.pack;
-    showMapPack();
+    applyCatalog(mapPack.catalog);
     if(lastPacket)syncRoomCatalog(lastPacket);
   }
   const available=value=>Number.isFinite(value)&&value>=0;
@@ -519,10 +514,10 @@
     if(follow2d){const point=observationPoint();const uv=point&&projection.project(selectedFloor.projection,point.x,point.y);
       if(uv)map.panTo([selectedFloor.height*(1-uv.v),selectedFloor.width*uv.u],{animate:false});}
   }
-  function validLivePacket() {
-    return lastPacket?.active===true&&lastPacket.coordinateSpace==='ue-world-centimeters'&&
-      ['cn','global'].includes(lastPacket.region)&&Number.isInteger(lastPacket.mapId)&&lastPacket.mapId>0&&
-      Number.isFinite(lastPacket.sx)&&Number.isFinite(lastPacket.sy);
+  function validLivePacket(packet=lastPacket) {
+    return packet?.active===true&&packet.coordinateSpace==='ue-world-centimeters'&&
+      ['cn','global'].includes(packet.region)&&Number.isInteger(packet.mapId)&&packet.mapId>0&&
+      Number.isFinite(packet.sx)&&Number.isFinite(packet.sy);
   }
   function teammates() {
     if(!validLivePacket()||!(lastPacket.t>0))return [];
@@ -818,9 +813,18 @@
     byId('viewerPresence').classList.toggle('live',valid);
   }
   function syncRoomCatalog(packet) {
-    if(!room||mapPackRequest)return;
-    if(preferMapPack(packet)){
-      if(!usesMapPack())showMapPack();
+    if(!room)return;
+    if(mapPackLoader){
+      const region=requiredPackRegion(packet);
+      if(mapPackRequest&&mapPackRequest.region!==region){
+        mapPackRequest.controller.abort();mapPackRequest=null;
+        if(mapPack?.catalog.region===region)setMapStatus('');
+      }
+      if(failedPackRegion&&failedPackRegion!==region){
+        failedPackRegion='';
+        if(mapPack?.catalog.region===region)setMapStatus('');
+      }
+      if(!mapPackRequest&&failedPackRegion!==region&&mapPack?.catalog.region!==region)void loadMapPack(region);
       return;
     }
     if(packet.atlasReady===false&&atlas){
@@ -828,7 +832,7 @@
       byId('mapName').textContent='等待地图';byId('captionName').textContent='';
       setMapStatus('等待手机同步地图…');clearTimeout(catalogRetry);catalogRetry=setTimeout(()=>{void loadCatalog();},5000);
     }
-    if(packet.atlasReady&&(usesMapPack()||packet.atlasRevision!==atlasRevision)&&!catalogLoading)void loadCatalog();
+    if(packet.atlasReady&&packet.atlasRevision!==atlasRevision&&!catalogLoading)void loadCatalog();
   }
   function connect() {
     stream?.close();clearInterval(connectionTimer);
@@ -905,9 +909,11 @@
   });
   for(const key of display3dKeys)byId(key).addEventListener('change',()=>{saveDisplay3d();if(is3d())renderMarkers();});
   byId('retryMap').addEventListener('click',()=>{
-    if(usesMapPack()&&selectedFloor)void selectFloor(selectedFloor.id);
-    else if(mapPackLoader&&!mapPack)void loadMapPack();
-    else void loadCatalog();
+    if(mapPackLoader){
+      const region=requiredPackRegion(lastPacket);
+      if(mapPack?.catalog.region===region&&selectedFloor)void selectFloor(selectedFloor.id);
+      else void loadMapPack(region);
+    }else void loadCatalog();
   });
   function setPanel(open) {
     byId('panel').hidden=!open;byId('menuToggle').setAttribute('aria-expanded',String(open));
@@ -938,7 +944,7 @@
   let sceneTimer=setInterval(()=>{if(is3d())void refreshScene();},250);
   addEventListener('resize',()=>{fit();sceneRenderer?.resize();});
   addEventListener('pagehide',()=>{
-    mapPackRequest?.abort();mapPackRequest=null;
+    mapPackRequest?.controller.abort();mapPackRequest=null;
     setViewerCount(null);stream?.close();clearInterval(connectionTimer);clearTimeout(catalogRetry);clearInterval(sceneTimer);invalidateScene();sceneRenderer?.setVisible(false);
   });
   addEventListener('pageshow',event=>{if(event.persisted){connect();if(mapPackLoader)void loadMapPack();sceneRenderer?.setVisible(is3d());clearInterval(sceneTimer);sceneTimer=setInterval(()=>{if(is3d())void refreshScene();},250);}});
