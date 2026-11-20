@@ -102,7 +102,7 @@ function openRoom() {
   const pane=map.createPane('enemies');pane.style.zIndex='450';pane.style.pointerEvents='none';
   const canvas=document.createElement('canvas');pane.appendChild(canvas);
   const ctx=canvas.getContext('2d');
-  let index=0, layer, frame=null, lastFrame=0, dirty=false;
+  let index=0, tileIndex=-1, layer, tileFailed=false, frame=null, lastFrame=0, dirty=false;
   let selected='free',selectedLabel='',choices='';
   const viewName=slot=>slot===0?'自己':'队友 '+slot;
   function updateViews() {
@@ -117,9 +117,10 @@ function openRoom() {
     }
     if(viewSelect.value!==selected)viewSelect.value=selected;
   }
+  const selectedView=()=>selected==='free'?null:frame?.v?.find(v=>String(v[0])===selected);
   function follow() {
-    if(selected==='free')return;
-    const target=frame?.v?.find(v=>String(v[0])===selected);
+    if(scene?.active)return;
+    const target=selectedView();
     if(!target)return;
     const pos=projectEnemy(index,target[2],target[3],frame.o);
     if(!pos)return;
@@ -133,8 +134,23 @@ function openRoom() {
     updateViews();follow();scheduleDraw();
   });
   map.on('dragstart',()=>{selected='free';selectedLabel='';updateViews();scheduleDraw();});
+  const viewLocation=v=>({id:v[0],x:v[2],y:v[3],z:v[5]});
+  function redrawScene() {
+    const markers=[];
+    for(const e of frame?.e||[]){
+      markers.push({x:e[0],y:e[1],z:e[8],kind:'enemy',label:display.sH?(e[4]||'未知干员'):'',
+        details:display.sAR?'头'+(e[5]??'—')+' / 甲'+(e[6]??'—'):'',
+        team:display.sTN?e[3]:null,health:display.sHP?e[2]:null});
+    }
+    for(const v of frame?.v||[]){
+      markers.push({...viewLocation(v),kind:v[1]===0?'self':'ally',label:viewName(v[1])});
+    }
+    const focus=selectedView();
+    scene.update(frame?(frame.o??[]):null,markers,focus?viewLocation(focus):null);
+  }
   function redraw() {
     dirty=false;
+    if(scene?.active){redrawScene();return;}
     const size=map.getSize(), top=map.containerPointToLayerPoint([0,0]), ratio=window.devicePixelRatio||1;
     L.DomUtil.setPosition(canvas,top);
     canvas.style.width=size.x+'px';canvas.style.height=size.y+'px';
@@ -171,16 +187,31 @@ function openRoom() {
       scheduleDraw();
     });
   }
-  function setMap() {
+  function loadTiles() {
+    if(tileIndex===index)return;
     if (layer) layer.remove();
-    index=select.selectedIndex;
-    tileStatus.hidden=true;
+    tileIndex=index;tileFailed=false;tileStatus.hidden=true;
     layer=L.tileLayer(tileBase+maps[index][7]+'/{z}_{x}_{y}.jpg',{
       minZoom:3,maxZoom:8,maxNativeZoom:4,tileSize:256,noWrap:true,bounds:[[-256,0],[0,256]]
     }).addTo(map);
-    layer.on('tileerror',()=>{tileStatus.hidden=false;});
+    const current=layer;
+    layer.on('tileerror',()=>{if(current===layer){tileFailed=true;tileStatus.hidden=!!scene?.active;}});
     map.setView([-128,128],3,{animate:false});
-    follow();scheduleDraw();
+  }
+  const scene=globalThis.DfmRadarScene?.create({
+    onModeChange(three){
+      tileStatus.hidden=three||!tileFailed;
+      if(!three){loadTiles();map.invalidateSize({animate:false});follow();}
+      scheduleDraw();
+    },
+    onFit(){selected='free';selectedLabel='';updateViews();scheduleDraw();},redraw:scheduleDraw
+  });
+  function setMap(){
+    const next=Number(select.value);
+    if(!Number.isInteger(next)||!maps[next])return;
+    index=next;scene?.setMap(index);
+    if(!scene?.active){loadTiles();follow();}
+    scheduleDraw();
   }
   select.addEventListener('change',setMap);
   map.on('move zoom resize viewreset',scheduleDraw);setMap();

@@ -9,8 +9,10 @@
   <script defer src="../transport.js" data-game="dfm" data-endpoint="ws://103.236.84.5:19558/radar-ws"></script>
   <link rel="stylesheet" href="./vendor/leaflet.css">
   <link rel="stylesheet" href="./web.css">
+  <link rel="stylesheet" href="./scene.css">
   <script defer src="./vendor/leaflet.js"></script>
-  <script type="module" src="./room.mjs"></script>
+  <script defer src="./scene.js?v=769ecc7e48e1"></script>
+  <script type="module" src="./room.mjs?v=2cdff11221a6"></script>
 </head>
 <body class="viewer">
 <div id="radarPage" class="show">
@@ -21,11 +23,21 @@
     <span id="viewers" aria-live="polite">— 人在线</span>
   </div>
   <main id="map" aria-label="敌人位置地图"></main>
+  <section id="scene-view" aria-label="3D 地图" hidden>
+    <canvas id="scene-canvas" tabindex="0" aria-label="拖动旋转地图，滚轮或双指缩放"></canvas>
+    <div id="scene-markers" aria-hidden="true"></div>
+    <button type="button" id="scene-fit" disabled>全图</button>
+    <div class="scene-feedback"><div id="scene-status" role="status" hidden></div><button type="button" id="scene-retry" hidden>重试</button></div>
+  </section>
   <div id="tile-status" role="status" hidden>底图暂时无法加载</div>
 <button type="button" id="menuBtn" aria-label="打开雷达设置" aria-expanded="false" aria-controls="sideMenu"><svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h6m4 0h6M4 17h10m4 0h2"/><circle cx="12" cy="7" r="2"/><circle cx="16" cy="17" r="2"/></svg><span>雷达设置</span></button>
 <aside id="sideMenu" role="region" aria-label="雷达设置" aria-hidden="true" inert>
   <header class="panel-head"><div class="panel-brand"><svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4v8l5 5M4 12h3M12 17v3"/><circle cx="9" cy="10" r="1"/></svg></div><div class="panel-heading"><h2>雷达设置</h2></div><button type="button" class="panel-close" aria-label="关闭雷达设置"><svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg></button></header>
   <div class="map-card"><div class="map-card-top"><label for="mapSel"><svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Zm6-2v16m6-14v16"/></svg>当前地图</label><span class="map-count">6 张地图</span></div><div class="map-select-wrap"><select class="menu-select" id="mapSel"><option value="0">零号大坝</option><option value="1">长弓溪谷</option><option value="2">航天基地</option><option value="3">巴克什</option><option value="4">潮汐监狱</option><option value="5">AZ3</option></select><svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></div></div>
+  <div class="map-card view-card">
+    <div class="map-card-top"><label for="scene-mode">地图模式</label></div>
+    <div class="map-select-wrap"><select class="menu-select" id="scene-mode" disabled><option value="2d">2D 地图</option><option value="3d">3D 地图</option></select><svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></div>
+  </div>
   <div class="map-card view-card">
     <div class="map-card-top"><label for="viewSel">跟随视角</label></div>
     <div class="map-select-wrap"><select class="menu-select" id="viewSel"><option value="free">自由看图</option></select><svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></div>
