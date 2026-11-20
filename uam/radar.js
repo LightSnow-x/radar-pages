@@ -19,7 +19,10 @@
   let sceneTransfer=null,sceneRetry=0;
   let avatarAsset=null,avatarBusy=false,avatarRetryAt=0,avatarMessage='';
   const sceneModel=globalThis.UamRadar3D;
-  byId('viewControls').hidden=Boolean(room);
+  const publicModelPack=globalThis.UamRadarModelPack;
+  const avatarLabel=publicModelPack?'奶娃模型':'奶龙模型';
+  const standingPoses=new Map();
+  byId('viewControls').hidden=Boolean(room&&!publicModelPack);
   const resourceUrl=path=>room?path+'?room='+room+(atlasRevision?'&rev='+atlasRevision:''):path;
   const images=new Map(),markers=new Map();
   let annotationLayers=[],annotationBaseZoom=0,annotationsReady=false;
@@ -158,7 +161,7 @@
     const floor=selected?.layers.find(layer=>layer.id===id);if(!floor||!map)return false;
     selectedFloor=floor;const request=++generation;
     clearImages();clearMarkers();byId('fitMap').disabled=!is3d();byId('floorSelect').value=id;
-    byId('captionName').textContent=is3d()?'3D 场景':floor.name;
+    if(!publicModelPack||!is3d())byId('captionName').textContent=is3d()?'3D 场景':floor.name;
     byId('coordinateStatus').hidden=true;byId('coordinateStatus').textContent='';
     setMapStatus('加载地图…');
     try {
@@ -192,8 +195,9 @@
   function selectMap(id) {
     const item=maps.find(item=>item.id===id);if(!item)return;
     const changed=selected?.id!==item.id;
-    selected=item;byId('mapName').textContent=item.name;updateMapSelection();
-    if(changed)invalidateScene();
+    selected=item;
+    if(!publicModelPack||!is3d()){byId('mapName').textContent=item.name;updateMapSelection();}
+    if(changed&&!publicModelPack)invalidateScene();
     options('floorSelect',item.layers);
     const floor=preview?params.get('floor'):null;
     const full=item.layers.find(layer=>layer.overview||layer.name.includes('全图'))||item.layers[0];
@@ -569,6 +573,19 @@
   }
   function sceneContext() {
     const live=validLivePacket();
+    if(publicModelPack){
+      const selection=byId('sceneMapSelect').value;
+      const entry=selection==='auto'?
+        (live?publicModelPack.maps.find(item=>item.mapId===lastPacket.mapId):
+          publicModelPack.maps.find(item=>item.id===selected?.id)||publicModelPack.maps[0]):
+        publicModelPack.maps.find(item=>item.id===selection);
+      if(!entry)return null;
+      const sameMap=live&&entry.mapId===lastPacket.mapId;
+      const point=sameMap?observationPoint():null;
+      const hasOrigin=sameMap&&Number.isFinite(lastPacket.oz);
+      return {request:{...entry,key:'model-pack:'+entry.id},point:Number.isFinite(point?.z)?point:null,
+        matched:hasOrigin,waitingHeight:sameMap&&(!hasOrigin||!Number.isFinite(point?.z))};
+    }
     const region=atlas?.region||(live?lastPacket.region:null),mapId=selected?.gameMapId||(live?lastPacket.mapId:0);
     const matched=live&&lastPacket.region===region&&lastPacket.mapId===mapId;
     let point=matched?observationPoint():null;
@@ -577,10 +594,62 @@
     const request=sceneModel?.request(region,mapId,'0',0,viewMode==='3d-color');
     return request?{request,point,matched:matched&&Number.isFinite(point?.z)}:null;
   }
+  async function refreshModelPack(request,force) {
+    if(sceneKey!==request.key){invalidateScene();sceneKey=request.key;}
+    if(sceneBusy||(sceneTransfer&&sceneTransfer.next===sceneTransfer.pages)||(!force&&performance.now()<nextSceneFetch))return;
+    if(sceneTransfer){sceneRenderer.clear();sceneTransfer=null;}
+
+    const controller=new AbortController();
+    const generation=++sceneGeneration;
+    sceneAbort=controller;sceneBusy=true;
+    sceneStatus('正在请求 '+request.name+' 的 3D 地图…');
+    try {
+      const result=await publicModelPack.load(request,controller.signal,message=>{
+        if(generation===sceneGeneration)sceneStatus(message);
+      });
+      if(generation!==sceneGeneration||controller.signal.aborted)return;
+      if(!result.scene){
+        sceneStatus(result.error||'3D 地图加载失败，可重试',true);
+        nextSceneFetch=Infinity;
+        return;
+      }
+      const {pages,...geometry}=result.scene;
+      sceneTransfer={pages:pages.length,next:0};
+      sceneStatus('正在显示 3D 地图…');
+      for(let index=0;index<pages.length;++index){
+        const vertices=pages[index];
+        const page={...geometry,vertices,page:index,pages:pages.length,count:vertices.length/9,
+          surfaces:false,signature:request.key};
+        if(!sceneRenderer.addPage(page)){
+          sceneRenderer.clear();sceneTransfer=null;
+          sceneStatus('3D 图形资源暂不可用，可重试或切回 2D',true);
+          nextSceneFetch=Infinity;
+          return;
+        }
+        pages[index]=null;++sceneTransfer.next;
+        if(index+1<pages.length){
+          await new Promise(resolve=>setTimeout(resolve,0));
+          if(generation!==sceneGeneration)return;
+        }
+      }
+      sceneStatus('3D 地图已加载');
+      renderScene(false);
+    }catch(_){
+      if(generation===sceneGeneration){
+        sceneRenderer.clear();sceneTransfer=null;nextSceneFetch=Infinity;
+        sceneStatus('3D 图形资源暂不可用，可重试或切回 2D',true);
+      }
+    }finally{if(generation===sceneGeneration){sceneBusy=false;sceneAbort=null;}}
+  }
   async function refreshScene(force=false) {
-    if(!is3d()||room||!sceneRenderer)return;
+    if(!is3d()||(room&&!publicModelPack)||!sceneRenderer)return;
     const context=sceneContext();
-    if(!context){invalidateScene();sceneStatus('等待地图或有效的对局坐标…');return;}
+    if(!context){
+      if(sceneKey)invalidateScene();
+      sceneStatus(publicModelPack?'当前地图暂无对应的 3D 模型':'等待地图或有效的对局坐标…');
+      return;
+    }
+    if(publicModelPack){await refreshModelPack(context.request,force);return;}
     const root=context.request;
     if(sceneKey!==root.key){invalidateScene();sceneKey=root.key;}
     if(sceneBusy||(!force&&performance.now()<nextSceneFetch))return;
@@ -634,20 +703,42 @@
     }finally{clearTimeout(timeout);if(generation===sceneGeneration){sceneBusy=false;sceneAbort=null;if(continueTransfer)void refreshScene();}}
   }
   async function loadAvatar(force=false) {
-    if(!sceneRenderer||room||avatarBusy||avatarAsset||(!force&&performance.now()<avatarRetryAt))return;
-    avatarBusy=true;avatarMessage='正在加载奶龙模型…';
-    const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
+    if(!sceneRenderer||(room&&!publicModelPack)||avatarBusy||avatarAsset||(!force&&performance.now()<avatarRetryAt))return;
+    avatarBusy=true;avatarMessage='正在加载'+avatarLabel+'…';
+    const controller=publicModelPack?null:new AbortController();
+    const timeout=controller?setTimeout(()=>controller.abort(),15000):undefined;
     try {
-      const response=await RadarPages.fetch('/avatar/nailong.json',{cache:'no-store',signal:controller.signal});
-      const model=response.ok?globalThis.UamRadarAvatar?.decode(await response.json()):null;
-      if(model&&sceneRenderer.setAvatar(model)){avatarAsset=model;avatarMessage='';}
-      else {avatarMessage='奶龙模型暂不可用，可重新加载';avatarRetryAt=performance.now()+3000;}
-    }catch(_){avatarMessage='奶龙模型连接中断，等待重试';avatarRetryAt=performance.now()+3000;}
+      let model;
+      if(publicModelPack)model=await globalThis.DfmRadarAvatarPack?.model();
+      else{
+        const response=await RadarPages.fetch('/avatar/nailong.json',{cache:'no-store',signal:controller.signal});
+        if(response.ok)model=globalThis.UamRadarAvatar?.decode(await response.json());
+      }
+      if(model&&sceneRenderer.setAvatar(model)){avatarAsset=model;standingPoses.clear();avatarMessage='';}
+      else {avatarMessage=avatarLabel+'暂不可用，可重新加载';avatarRetryAt=performance.now()+3000;}
+    }catch(_){avatarMessage=avatarLabel+'连接中断，等待重试';avatarRetryAt=performance.now()+3000;}
     finally{clearTimeout(timeout);avatarBusy=false;if(is3d())renderScene(false);}
+  }
+  function standingAvatar(yaw,self) {
+    const degrees=Number.isFinite(yaw)?(Math.round(yaw)%360+360)%360:0;
+    const key=degrees+(self?360:0);
+    if(!standingPoses.has(key)){
+      // The observer uses the camera origin. Player positions use the capsule center.
+      const angle=degrees*Math.PI/180,c=Math.cos(angle),s=Math.sin(angle);
+      const matrix=[c,-s,0,0,s,c,0,0,0,0,1,self?-1.65:-.9];
+      const matrices=new Float32Array(avatarAsset.influenceBounds.length*matrix.length);
+      for(let at=0;at<matrices.length;at+=matrix.length)matrices.set(matrix,at);
+      standingPoses.set(key,{matrices,bounds:globalThis.UamRadarAvatar.bounds(avatarAsset,{matrices})});
+    }
+    return standingPoses.get(key);
   }
   function renderScene(load=true) {
     if(!sceneRenderer)return;
     const context=sceneContext(),items=[];
+    if(publicModelPack){
+      byId('mapName').textContent=context?.request.name||selected?.name||'等待地图';
+      byId('mapEdition').textContent=preview?'地图预览':byId('sceneMapSelect').value==='auto'?'自动跟随地图':'手动选图';
+    }
     if(context?.matched) {
       const p=lastPacket,ox=Number.isFinite(p.ox)?p.ox:0,oy=Number.isFinite(p.oy)?p.oy:0;
       const now=performance.now();
@@ -658,9 +749,12 @@
         node.appendChild(crate?markerContent(visual):sceneLabel(visual));
         let distanceLabel=null;
         if(!crate&&visual.distance){distanceLabel=document.createElement('div');distanceLabel.className='scene-distance';distanceLabel.textContent=visual.distance;node.appendChild(distanceLabel);}
-        const avatar=!crate&&byId('showAvatars').checked&&visual.model?globalThis.UamRadarAvatar?.pose(entity,p,lastFrameAt,now):null;
-        const spatialPose=!crate?(avatar||globalThis.UamRadarAvatar?.pose(entity,p,lastFrameAt,now)):null;
-        const bodyBounds=spatialPose&&avatarAsset?globalThis.UamRadarAvatar.bounds(avatarAsset,spatialPose):null;
+        const tracked=!crate?globalThis.UamRadarAvatar?.pose(entity,p,lastFrameAt,now):null;
+        const self=visual.className==='self';
+        const standing=publicModelPack&&!crate&&!tracked&&avatarAsset?standingAvatar(self?p.syaw:entity?.yaw,self):null;
+        const spatialPose=tracked||(standing&&{matrices:standing.matrices,expiresAt:lastFrameAt+2500});
+        const avatar=byId('showAvatars').checked&&visual.model?spatialPose:null;
+        const bodyBounds=standing?.bounds||(tracked&&avatarAsset?globalThis.UamRadarAvatar.bounds(avatarAsset,tracked):null);
         const tint=visual.className==='self'?[.13,.53,1]:visual.className.includes('ally')?[.17,.74,.51]:visual.className.includes('bot')?[1,1,1]:[1,.2,.2];
         items.push({id:entity?.i||(visual.className==='self'?p.sid:''),x:x+ox,y:y+oy,z:z+p.oz,node,distanceLabel,avatar,tint,bounds:bodyBounds,
           lineColor:visual.className.includes('bot')?'rgb(255,255,255)':visual.className.startsWith('human')?'rgb(233,55,51)':null,
@@ -671,29 +765,40 @@
       for(const e of p.e)if(e&&[0,1,4].includes(e.tp))add(e.x,e.y,e.z,e.tp===4?crateVisual(e,true):entityVisual(e,p,true),e);
     }
     sceneRenderer.update(context?.point||null,items);
-    byId('cameraStatus').hidden=!is3d()||byId('cameraMode').value!=='first'||!!context?.point?.view;
-    byId('cameraStatus').textContent='等待所选目标的实时视角…';
+    byId('cameraStatus').hidden=!is3d()||(publicModelPack?!context?.waitingHeight:
+      byId('cameraMode').value!=='first'||!!context?.point?.view);
+    byId('cameraStatus').textContent=publicModelPack?'等待带高度的雷达数据…':'等待所选目标的实时视角…';
     byId('avatarStatus').hidden=!is3d();
     byId('retryAvatar').hidden=!is3d()||!byId('showAvatars').checked||!!avatarAsset||avatarBusy||!avatarMessage;
-    byId('avatarStatus').textContent=!byId('showAvatars').checked?'奶龙模型已隐藏':avatarMessage||
-      (avatarAsset?'奶龙模型 · '+items.filter(i=>i.avatar).length+' 个目标':'等待奶龙模型');
+    byId('avatarStatus').textContent=!byId('showAvatars').checked?avatarLabel+'已隐藏':avatarMessage||
+      (avatarAsset?avatarLabel+' · '+items.filter(i=>i.avatar).length+' 个目标':'等待'+avatarLabel);
     if(load&&byId('showAvatars').checked)void loadAvatar();
     if(load)void refreshScene();
   }
   function setViewMode(value) {
-    if(!['2d','3d','3d-color'].includes(value)||room||value===viewMode)return;
+    if(!['2d','3d','3d-color'].includes(value)||(room&&!publicModelPack)||(publicModelPack&&value==='3d-color')||value===viewMode)return;
     if(value!=='2d'&&!sceneRenderer) {
       sceneRenderer=sceneModel?.create(byId('sceneCanvas'),byId('sceneMarkers'),text=>{avatarAsset=null;avatarRetryAt=0;invalidateScene();sceneStatus(text,true);},byId('sceneDecorations'),text=>{const status=byId('sceneTextureStatus');status.textContent=text;status.hidden=!text||viewMode!=='3d-color';});
       if(!sceneRenderer){viewMode='3d';sceneStatus(byId('sceneStatus').textContent||'3D 组件不可用，请刷新页面',true);viewMode='2d';byId('viewMode').value='2d';return;}
+      if(publicModelPack&&(preview||manualMapId)&&publicModelPack.maps.some(item=>item.id===selected?.id)){
+        byId('sceneMapSelect').value=selected.id;
+      }
     }
     viewMode=value;byId('viewMode').value=value;byId('map').hidden=value!=='2d';byId('sceneView').hidden=value==='2d';
     byId('avatarControl').hidden=value==='2d';byId('avatarStatus').hidden=value==='2d';byId('retryAvatar').hidden=true;
     byId('targets2d').hidden=value!=='2d';byId('targets3d').hidden=value==='2d';
-    byId('cameraControls').hidden=value==='2d';byId('cameraStatus').hidden=true;
+    byId('cameraControls').hidden=value==='2d'||!!publicModelPack;byId('cameraStatus').hidden=true;
     byId('floorSelect').disabled=value!=='2d'||!atlas;byId('fitMap').disabled=value!=='2d'?false:!bounds;
     byId('fitMap').title=value!=='2d'?'显示完整 3D 地图':'将当前楼层完整显示在可见区域';
     byId('fitLabel').textContent='全图';byId('annotationControls').hidden=value!=='2d';byId('followScene').hidden=value==='2d';
     if(value==='2d')byId('captionName').textContent=selectedFloor?.name||'';
+    if(publicModelPack){
+      byId('previewMapControls').hidden=value!=='2d';
+      byId('sceneMapControls').hidden=value==='2d';
+      byId('floorLabel').hidden=value!=='2d';
+      byId('floorSelect').hidden=value!=='2d';
+      if(value==='2d'){byId('mapName').textContent=selected?.name||'等待地图';updateMapSelection();}
+    }
     byId('sceneStatus').hidden=value==='2d';byId('retryScene').hidden=true;
     ++sceneGeneration;sceneAbort?.abort();sceneAbort=null;sceneBusy=false;clearTimeout(sceneRetry);nextSceneFetch=0;
     byId('sceneTextureStatus').hidden=value!=='3d-color'||!byId('sceneTextureStatus').textContent;
@@ -775,6 +880,13 @@
     else {manualMapId=id;selectMap(id);}
     updateFrameStatus();renderMarkers();
   });
+  if(publicModelPack){
+    options('sceneMapSelect',preview?publicModelPack.maps:[{id:'auto',name:'跟随当前对局'},...publicModelPack.maps]);
+    byId('sceneMapSelect').value=preview?publicModelPack.maps[0].id:'auto';
+    byId('sceneMapSelect').addEventListener('change',()=>{
+      invalidateScene();sceneRenderer?.follow();renderMarkers();
+    });
+  }
   byId('floorSelect').addEventListener('change',event=>{void selectFloor(event.target.value);});
   byId('fitMap').addEventListener('click',()=>{follow2d=false;if(is3d()){byId('cameraMode').value='third';byId('cameraStatus').hidden=true;sceneRenderer?.fit();}fit();});
   byId('cameraMode').value='third';

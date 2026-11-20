@@ -8,15 +8,17 @@
   <link rel="stylesheet" href="../connection.css">
   <script defer src="../transport.js" data-game="uam" data-endpoint="ws://103.236.84.5:19558/radar-ws"></script>
   <link rel="stylesheet" href="vendor/leaflet.css">
-  <link rel="stylesheet" href="radar.css">
+  <link rel="stylesheet" href="radar.css?v=public-3d">
   <script defer src="vendor/leaflet.js"></script>
   <script defer src="projection.js"></script>
   <script defer src="annotations.js"></script>
-  <script defer src="radar-3d.js"></script>
+  <script defer src="radar-3d.js?v=c69f491b2a81"></script>
   <script defer src="radar-avatar.js"></script>
   <script defer src="vendor/fflate-0.8.3.js"></script>
   <script defer src="map-pack.js"></script>
-  <script defer src="radar.js?v=default-map-pack"></script>
+  <script defer src="avatar-pack.js"></script>
+  <script defer src="model-pack.js?v=c69f491b2a81"></script>
+  <script defer src="radar.js?v=public-3d"></script>
 </head>
 <body>
   <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
@@ -34,7 +36,7 @@
     </defs>
   </svg>
   <main id="map" aria-label="暗区突围手游大地图"></main>
-  <section id="sceneView" aria-label="本地模型 3D 雷达" hidden>
+  <section id="sceneView" aria-label="3D 雷达" hidden>
     <canvas id="sceneCanvas" tabindex="0" aria-label="3D 地图：拖动旋转，滚轮或双指缩放，方向键旋转"></canvas>
     <canvas id="sceneDecorations" aria-hidden="true"></canvas>
     <div id="sceneMarkers" aria-label="3D 实时目标"></div>
@@ -61,20 +63,21 @@
       <section id="mapControls" class="tab-panel" role="tabpanel" aria-labelledby="mapTab">
         <section class="control-section" aria-labelledby="navigationTitle">
           <div class="section-heading"><h2 id="navigationTitle">地图导航</h2><span id="mapEdition" class="mode-label">自动跟随地图</span></div>
-          <div id="viewControls"><label for="viewMode">显示模式</label><select id="viewMode"><option value="2d">2D</option><option value="3d">3D</option><option value="3d-color">3D 彩图</option></select></div>
+          <div id="viewControls"><label for="viewMode">显示模式</label><select id="viewMode"><option value="2d">2D</option><option value="3d">3D</option></select></div>
           <label class="floor-label" for="followSelect">观测目标</label><select id="followSelect"><option value="self">自己</option></select>
           <p id="followStatus" class="section-note" role="status" hidden></p>
           <button id="followScene" class="retry-button" type="button" hidden>回到观测目标</button>
           <div id="cameraControls" hidden><label class="floor-label" for="cameraMode">3D 视角</label><select id="cameraMode"><option value="third">第三人称 · 环绕</option><option value="first">第一人称 · 跟随视线</option></select></div>
           <p id="cameraStatus" role="status" hidden></p>
-          <label id="avatarControl" class="avatar-control" hidden><input id="showAvatars" type="checkbox" checked>奶龙角色模型</label>
+          <label id="avatarControl" class="avatar-control" hidden><input id="showAvatars" type="checkbox" checked>奶娃角色模型</label>
           <p id="avatarStatus" role="status" hidden></p>
-          <button id="retryAvatar" class="retry-button" type="button" hidden>重试奶龙模型</button>
+          <button id="retryAvatar" class="retry-button" type="button" hidden>重试奶娃模型</button>
           <p id="sceneStatus" role="status" aria-live="polite" hidden></p>
           <p id="sceneTextureStatus" role="status" aria-live="polite" hidden></p>
           <button id="retryScene" class="retry-button" type="button" hidden>重新加载 3D 场景</button>
           <div id="previewMapControls"><label for="mapSelect">切换地图</label><select id="mapSelect" disabled></select></div>
-          <label class="floor-label" for="floorSelect">楼层 / 区域</label>
+          <div id="sceneMapControls" hidden><label for="sceneMapSelect">切换地图</label><select id="sceneMapSelect"></select></div>
+          <label id="floorLabel" class="floor-label" for="floorSelect">楼层 / 区域</label>
           <div class="floor-controls"><select id="floorSelect"></select><button id="fitMap" type="button" title="将当前楼层完整显示在可见区域"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-fit"/></svg><span id="fitLabel">全图</span></button></div>
           <button id="retryMap" class="retry-button" type="button" hidden>重新加载地图</button>
           <p id="mapStatus" role="status" aria-live="polite">加载地图…</p>
@@ -145,7 +148,7 @@
           <section class="entity-group">
             <div class="entity-heading"><span class="entity-avatar human"><svg viewBox="0 0 24 24"><use href="#icon-user"/></svg></span><div><h3>真人玩家</h3><p>模型与头顶信息</p></div><label class="switch"><input id="d3humanVisible" type="checkbox" checked aria-label="3D 真人显示"><span></span></label></div>
             <div class="entity-options">
-              <label><input id="d3humanModel" type="checkbox" checked>奶龙模型</label>
+              <label><input id="d3humanModel" type="checkbox" checked>奶娃模型</label>
               <label><input id="d3humanName" type="checkbox" checked>玩家名称</label>
               <label><input id="d3humanHealth" type="checkbox" checked>血量条</label>
               <label><input id="d3humanEquipment" type="checkbox" checked>头甲等级</label>
@@ -162,7 +165,7 @@
           <section class="entity-group">
             <div class="entity-heading"><span class="entity-avatar bot"><svg viewBox="0 0 24 24"><use href="#icon-bot"/></svg></span><div><h3>人机单位</h3><p>模型与兵种信息</p></div><label class="switch"><input id="d3botVisible" type="checkbox" checked aria-label="3D 人机显示"><span></span></label></div>
             <div class="entity-options">
-              <label><input id="d3botModel" type="checkbox" checked>奶龙模型</label>
+              <label><input id="d3botModel" type="checkbox" checked>奶娃模型</label>
               <label><input id="d3botName" type="checkbox" checked>兵种名称</label>
               <label><input id="d3botHealth" type="checkbox" checked>血量条</label>
               <label><input id="d3botEquipment" type="checkbox" checked>头甲等级</label>

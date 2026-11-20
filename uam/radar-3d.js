@@ -148,10 +148,12 @@
     function limitDistance(value){return Math.max(3,Math.min(Math.max(300,radius()*8),value));}
     function focusAndDistance(width,height) {
       const whole=overview||!target;
-      const center=scene.minimum.map((v,i)=>(v*.5+scene.maximum[i]*.5-scene.origin[i])*.01);
+      const minimum=scene.focusMinimum||scene.minimum,maximum=scene.focusMaximum||scene.maximum;
+      const center=minimum.map((v,i)=>(v*.5+maximum[i]*.5-scene.origin[i])*.01);
       const focus=whole?center:[(target.x-scene.origin[0])*.01,(target.y-scene.origin[1])*.01,
         finite(target.z)?(target.z-scene.origin[2])*.01:center[2]];
-      const fitDistance=radius()/Math.sin(Math.atan(Math.tan(Math.PI/6)*Math.min(1,width/height)))*1.1;
+      const fitRadius=Math.max(1,Math.hypot(...maximum.map((v,i)=>(v-minimum[i])*.005)));
+      const fitDistance=fitRadius/Math.sin(Math.atan(Math.tan(Math.PI/6)*Math.min(1,width/height)))*1.1;
       return {focus,distance:whole&&autoFit?Math.max(8,fitDistance):distance};
     }
     const pointers=new Map();let pinch=0;

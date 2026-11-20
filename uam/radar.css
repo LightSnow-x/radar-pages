@@ -111,7 +111,7 @@ select option { background: #25322c; color: #e2eadf; }
 #previewMapControls { margin-bottom: 12px; }
 .floor-controls { display: flex; gap: 8px; align-items: stretch; }
 .floor-controls select { flex: 1; min-width: 0; width: auto; }
-#fitMap { display: flex; align-items: center; justify-content: center; gap: 5px; flex: 0 0 66px; border: 1px solid #b6c6a638; border-radius: 5px; background: #bfcdb00d; color: #c5d3bb; font-size: 10px; }
+#fitMap { display: flex; align-items: center; justify-content: center; gap: 5px; flex: 0 0 66px; min-height: 37px; border: 1px solid #b6c6a638; border-radius: 5px; background: #bfcdb00d; color: #c5d3bb; font-size: 10px; }
 #fitMap svg { width: 15px; height: 15px; }
 #fitMap:hover:not(:disabled) { background: #bbc5a920; }
 .retry-button { width: 100%; margin-top: 10px; min-height: 34px; border: 1px solid #c09c744d; border-radius: 5px; color: #eab782; background: #c5945d12; font-size: 11px; }
