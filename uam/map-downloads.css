@@ -1,0 +1,28 @@
+.map-download-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.map-download-links a {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  padding: 4px;
+  border: 1px solid #b6c6a638;
+  border-radius: 5px;
+  background: #bfcdb00d;
+  color: #c5d3bb;
+  font-size: 12px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.map-download-links a:hover {
+  background: #bbc5a920;
+}
+
+.map-download-links a:focus-visible {
+  outline: 2px solid #f1c699;
+  outline-offset: 2px;
+}

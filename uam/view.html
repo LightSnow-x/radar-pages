@@ -15,6 +15,7 @@
   <script defer src="radar-3d.js"></script>
   <script defer src="radar-avatar.js"></script>
   <script defer src="radar.js"></script>
+  <link rel="stylesheet" href="map-downloads.css">
 </head>
 <body>
   <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
@@ -76,6 +77,13 @@
           <div class="floor-controls"><select id="floorSelect"></select><button id="fitMap" type="button" title="将当前楼层完整显示在可见区域"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-fit"/></svg><span id="fitLabel">全图</span></button></div>
           <button id="retryMap" class="retry-button" type="button" hidden>重新加载地图</button>
           <p id="mapStatus" role="status" aria-live="polite">加载地图…</p>
+        </section>
+        <section class="control-section" aria-labelledby="mapDownloadsTitle">
+          <div class="section-heading"><h2 id="mapDownloadsTitle">2D 底图下载</h2></div>
+          <div class="map-download-links">
+            <a href="https://media.meilinvps.com/f.php?id=vB21DUi87RxC.zip" download>国服底图 ZIP</a>
+            <a href="https://media.meilinvps.com/f.php?id=s9JVIa5zdyZu.zip" download>国际服底图 ZIP</a>
+          </div>
         </section>
         <section id="annotationControls" class="control-section" aria-labelledby="annotationTitle">
           <div class="section-heading"><h2 id="annotationTitle">地图标注</h2><span class="section-caption">区域与撤离</span></div>
