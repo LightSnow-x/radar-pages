@@ -12,13 +12,13 @@
   <script defer src="vendor/leaflet.js"></script>
   <script defer src="projection.js"></script>
   <script defer src="annotations.js"></script>
-  <script defer src="radar-3d.js?v=b69f23496ab8"></script>
+  <script defer src="radar-3d.js?v=12819bd34914"></script>
   <script defer src="radar-avatar.js"></script>
   <script defer src="vendor/fflate-0.8.3.js"></script>
   <script defer src="map-pack.js?v=browser-maps"></script>
   <script defer src="avatar-pack.js"></script>
   <script defer src="model-pack.js?v=b69f23496ab8"></script>
-  <script defer src="radar.js?v=browser-maps"></script>
+  <script defer src="radar.js?v=observation-camera"></script>
 </head>
 <body>
   <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
@@ -67,7 +67,7 @@
           <label class="floor-label" for="followSelect">观测目标</label><select id="followSelect"><option value="self">自己</option></select>
           <p id="followStatus" class="section-note" role="status" hidden></p>
           <button id="followScene" class="retry-button" type="button" hidden>回到观测目标</button>
-          <div id="cameraControls" hidden><label class="floor-label" for="cameraMode">3D 视角</label><select id="cameraMode"><option value="third">第三人称 · 环绕</option><option value="first">第一人称 · 跟随视线</option></select></div>
+          <div id="cameraControls" hidden><label class="floor-label" for="cameraMode">3D 视角</label><select id="cameraMode"><option value="third">第三人称 · 环绕</option><option value="first">第一人称 · 跟随视线</option><option value="free">自由视角</option></select></div>
           <p id="cameraStatus" role="status" hidden></p>
           <label id="avatarControl" class="avatar-control" hidden><input id="showAvatars" type="checkbox" checked>奶娃角色模型</label>
           <p id="avatarStatus" role="status" hidden></p>

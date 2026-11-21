@@ -536,7 +536,8 @@
     if(key!==rosterKey){options('followSelect',entries);rosterKey=key;}
     byId('followSelect').value=followId;byId('followSelect').disabled=!validLivePacket();
     byId('followScene').disabled=!validLivePacket();
-    if(is3d())byId('captionName').textContent='3D · '+(entries.find(e=>e.id===followId)?.name||'自己');
+    if(is3d())byId('captionName').textContent=byId('cameraMode').value==='free'?'3D · 自由视角':
+      '3D · '+(entries.find(e=>e.id===followId)?.name||'自己');
   }
   function observationPoint() {
     if(!validLivePacket())return null;
@@ -544,6 +545,15 @@
     const z=e?e.z:p.sz;
     const point={id:e?e.i:p.sid,x:(e?e.x:p.sx)+(Number.isFinite(p.ox)?p.ox:0),y:(e?e.y:p.sy)+(Number.isFinite(p.oy)?p.oy:0),
       z:Number.isFinite(z)&&Number.isFinite(p.oz)?z+p.oz:undefined};
+    if(publicModelPack&&Number.isFinite(point.z)) {
+      const yaw=e?e.yaw:p.syaw,pitch=e?e.pitch:p.spitch;
+      const hasYaw=Number.isFinite(yaw),hasPitch=Number.isFinite(pitch);
+      // The room feed reports teammate capsule positions, while self has a sampled eye position.
+      const teammateEyeOffsetCm=80;
+      point.view={x:point.x,y:point.y,z:point.z+(e?teammateEyeOffsetCm:0),yaw:hasYaw?yaw:0,
+        pitch:hasPitch?((pitch+180)%360+360)%360-180:0,manual:!hasYaw||!hasPitch,expiresAt:lastFrameAt+2500};
+      return point;
+    }
     if(!e&&[p.syaw,p.spitch,point.z].every(Number.isFinite))point.view={x:point.x,y:point.y,z:point.z,yaw:p.syaw,pitch:p.spitch,expiresAt:lastFrameAt+2500};
     if(e&&avatarAsset) {
       const pose=globalThis.UamRadarAvatar?.pose(e,p,lastFrameAt,performance.now());
@@ -760,9 +770,14 @@
       for(const e of p.e)if(e&&[0,1,4].includes(e.tp))add(e.x,e.y,e.z,e.tp===4?crateVisual(e,true):entityVisual(e,p,true),e);
     }
     sceneRenderer.update(context?.point||null,items);
-    byId('cameraStatus').hidden=!is3d()||(publicModelPack?!context?.waitingHeight:
-      byId('cameraMode').value!=='first'||!!context?.point?.view);
-    byId('cameraStatus').textContent=publicModelPack?'等待带高度的雷达数据…':'等待所选目标的实时视角…';
+    const cameraMode=byId('cameraMode').value,cameraStatus=byId('cameraStatus');
+    let cameraMessage='';
+    if(cameraMode==='free')cameraMessage='点击地图后用 WASD 移动、Q/E 升降。Shift 加拖动或双指拖动可平移。';
+    else if(publicModelPack&&context?.waitingHeight)cameraMessage='等待带高度的雷达数据…';
+    else if(cameraMode==='first'&&!context?.point?.view)cameraMessage='等待所选目标的实时视角…';
+    else if(cameraMode==='first'&&context.point.view.manual)cameraMessage='拖动可调整当前视角。';
+    cameraStatus.hidden=!is3d()||!cameraMessage;
+    if(cameraStatus.textContent!==cameraMessage)cameraStatus.textContent=cameraMessage;
     byId('avatarStatus').hidden=!is3d();
     byId('retryAvatar').hidden=!is3d()||!byId('showAvatars').checked||!!avatarAsset||avatarBusy||!avatarMessage;
     byId('avatarStatus').textContent=!byId('showAvatars').checked?avatarLabel+'已隐藏':avatarMessage||
@@ -782,7 +797,7 @@
     viewMode=value;byId('viewMode').value=value;byId('map').hidden=value!=='2d';byId('sceneView').hidden=value==='2d';
     byId('avatarControl').hidden=value==='2d';byId('avatarStatus').hidden=value==='2d';byId('retryAvatar').hidden=true;
     byId('targets2d').hidden=value!=='2d';byId('targets3d').hidden=value==='2d';
-    byId('cameraControls').hidden=value==='2d'||!!publicModelPack;byId('cameraStatus').hidden=true;
+    byId('cameraControls').hidden=value==='2d';byId('cameraStatus').hidden=true;
     byId('floorSelect').disabled=value!=='2d'||!atlas;byId('fitMap').disabled=value!=='2d'?false:!bounds;
     byId('fitMap').title=value!=='2d'?'显示完整 3D 地图':'将当前楼层完整显示在可见区域';
     byId('fitLabel').textContent='全图';byId('annotationControls').hidden=value!=='2d';byId('followScene').hidden=value==='2d';
@@ -892,10 +907,19 @@
     });
   }
   byId('floorSelect').addEventListener('change',event=>{void selectFloor(event.target.value);});
-  byId('fitMap').addEventListener('click',()=>{follow2d=false;if(is3d()){byId('cameraMode').value='third';byId('cameraStatus').hidden=true;sceneRenderer?.fit();}fit();});
+  byId('fitMap').addEventListener('click',()=>{
+    follow2d=false;
+    if(is3d()){byId('cameraMode').value='third';updateFollow();renderScene(false);sceneRenderer?.fit();}
+    fit();
+  });
   byId('cameraMode').value='third';
-  byId('cameraMode').addEventListener('change',event=>{sceneRenderer?.setPerspective(event.target.value);renderScene(false);});
-  byId('followScene').addEventListener('click',()=>{sceneRenderer?.follow();renderMarkers();});
+  byId('cameraMode').addEventListener('change',event=>{sceneRenderer?.setPerspective(event.target.value);updateFollow();renderScene(false);});
+  byId('followScene').addEventListener('click',()=>{
+    if(byId('cameraMode').value==='free'){
+      byId('cameraMode').value='third';sceneRenderer?.setPerspective('third');
+    }
+    sceneRenderer?.follow();renderMarkers();
+  });
   byId('viewMode').addEventListener('change',event=>setViewMode(event.target.value));
   byId('followSelect').addEventListener('change',event=>{
     const id=event.target.value;if(id!=='self'&&!teammates().some(e=>e.i===id))return;
