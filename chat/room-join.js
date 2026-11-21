@@ -108,7 +108,7 @@
         disconnect('暂时无法识别这个房间号，请稍后重试。');
         return;
       }
-      roomGame.textContent = state.gameLabel;
+      roomGame.textContent = /^\d{4}$/.test(message.roomCode) ? `${state.gameLabel} · 房间 ${message.roomCode}` : state.gameLabel;
       roomMember.textContent = message.sender || '访客';
       roomCount.textContent = '人数统计中';
       accessPanel.hidden = true;
@@ -136,6 +136,11 @@
     case 'chat-rate':
       clearPending(state);
       sendStatus.textContent = '发送太快，文字已保留，请稍后重试。';
+      updateSend();
+      break;
+    case 'chat-rejected':
+      clearPending(state);
+      sendStatus.textContent = '消息暂未发送。请缩短文字后重试。';
       updateSend();
       break;
     case 'chat-ended':
