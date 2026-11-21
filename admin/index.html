@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>房间管理 · Worker</title>
+  <link rel="stylesheet" href="./rooms.css?v=5c7f2a474550">
+  <script defer src="./rooms.js?v=5c7f2a474550"></script>
+</head>
+<body data-web-admin="1" data-admin-api-origin="https://103.236.84.5:19560">
+  <main id="web-admin-login" class="web-login" hidden aria-labelledby="web-login-title">
+    <form id="web-login-form" method="post">
+      <h1 id="web-login-title">Worker 管理员登录</h1>
+      <label for="web-login-password">密码</label>
+      <input id="web-login-password" type="password" required maxlength="128" autocomplete="current-password">
+      <button id="web-login-submit" type="submit">进入管理页</button>
+      <p id="web-login-status" role="status"></p>
+    </form>
+  </main>
+  <div id="worker-workspace">
+  <header class="topbar">
+    <div class="page-width header-content">
+      <div>
+        <span class="product">Worker 管理</span>
+        <h1>房间管理</h1>
+      </div>
+      <div class="update">
+        <span id="updated" role="status">正在连接</span>
+        <button id="refresh" type="button">刷新</button>
+        <button id="web-admin-logout" type="button" hidden>退出登录</button>
+      </div>
+    </div>
+  </header>
+  <main class="page-width">
+    <div class="filters" role="search" aria-label="筛选房间">
+      <label for="game">游戏
+        <span class="select-control">
+          <select id="game">
+            <option value="">全部游戏</option>
+            <option value="uam">暗区突围 · UAM</option>
+            <option value="dfm">三角洲行动 · DFM</option>
+            <option value="codm">使命召唤 · CODM</option>
+            <option value="cfm">穿越火线 · CFM</option>
+            <option value="lolm">英雄联盟手游 · LOLM</option>
+            <option value="valorant">无畏契约 · Valorant</option>
+          </select>
+        </span>
+      </label>
+      <label for="search">搜索
+        <input id="search" type="search" maxlength="96" placeholder="房号、开房者或会话编号" autocomplete="off">
+      </label>
+    </div>
+
+    <section class="panel" aria-labelledby="chat-title">
+      <header class="panel-heading">
+        <h2 id="chat-title">同行聊天室</h2>
+        <span id="chat-count"></span>
+      </header>
+      <div class="table-scroll" tabindex="0" role="region" aria-labelledby="chat-title">
+        <table>
+          <thead><tr><th scope="col">游戏</th><th scope="col">区服</th><th scope="col">房间号</th><th scope="col">状态</th><th scope="col">同局同行</th><th scope="col">网页连接</th><th scope="col">最近发言</th><th scope="col">操作</th></tr></thead>
+          <tbody id="chat-rows"><tr><td colspan="8" class="empty">正在读取聊天室</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" id="operator-chat" aria-labelledby="operator-room" hidden>
+      <header class="panel-heading operator-heading">
+        <div>
+          <h2 id="operator-room" tabindex="-1"></h2>
+          <p id="operator-profile"></p>
+        </div>
+        <button id="operator-leave" type="button">退出聊天室</button>
+      </header>
+      <ol id="operator-messages" class="operator-log" role="log" aria-label="房间消息"></ol>
+      <form id="operator-form" class="operator-form">
+        <label for="operator-text">消息</label>
+        <input id="operator-text" type="text" maxlength="300" required autocomplete="off">
+        <button id="operator-send" type="submit" disabled>发送</button>
+        <p id="operator-status" role="status"></p>
+      </form>
+    </section>
+
+    <section class="panel" aria-labelledby="radar-title">
+      <header class="panel-heading">
+        <h2 id="radar-title">线上雷达房间</h2>
+        <span id="radar-count"></span>
+      </header>
+      <p id="radar-status" class="source-status" role="status" hidden></p>
+      <div class="table-scroll" tabindex="0" role="region" aria-labelledby="radar-title">
+        <table>
+          <thead><tr><th scope="col">游戏</th><th scope="col">房间号</th><th scope="col">开房者</th><th scope="col">发布会话编号</th><th scope="col">最近续期</th></tr></thead>
+          <tbody id="radar-rows"><tr><td colspan="5" class="empty">正在读取雷达房间</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  </div>
+</body>
+</html>
