@@ -154,7 +154,7 @@
     state.retryTimer = setTimeout(() => connect(state), delay);
   }
 
-  function addMessage(text, own, name) {
+  function addMessage(text, own, name, admin) {
     const nearBottom = messages.scrollHeight - messages.clientHeight - messages.scrollTop < 60;
     const line = document.createElement('li');
     line.classList.add('chat-message');
@@ -162,7 +162,7 @@
     const sender = document.createElement('span');
     sender.className = 'message-sender';
     const displayName = typeof name === 'string' && name ? name : '访客';
-    sender.textContent = own ? displayName + ' · 我' : displayName;
+    sender.textContent = displayName + (admin ? ' · 管理员' : '') + (own ? ' · 我' : '');
     const body = document.createElement('p');
     body.className = 'message-text';
     body.textContent = text;
@@ -237,7 +237,7 @@
           state.lastMessageId = message.id;
         }
         const own = message.own === true;
-        addMessage(message.text, own, message.sender);
+        addMessage(message.text, own, message.sender, message.admin === true);
         if (own && state.pending?.text === message.text) {
           if (input.value === state.pending.draft) input.value = '';
           clearPending(state);
