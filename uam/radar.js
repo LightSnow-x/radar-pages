@@ -19,6 +19,7 @@
   let avatarAsset=null,avatarBusy=false,avatarRetryAt=0,avatarMessage='';
   const sceneModel=globalThis.UamRadar3D;
   const publicModelPack=globalThis.UamRadarModelPack;
+  const publicColorPack=globalThis.UamRadarColorPack;
   const avatarLabel=publicModelPack?'奶娃模型':'奶龙模型';
   const standingPoses=new Map();
   const touchCamera=byId('freeCameraTouch');
@@ -592,7 +593,8 @@
       const sameMap=live&&entry.mapId===lastPacket.mapId;
       const point=sameMap?observationPoint():null;
       const hasOrigin=sameMap&&Number.isFinite(lastPacket.oz);
-      return {request:{...entry,key:'model-pack:'+entry.id},point:Number.isFinite(point?.z)?point:null,
+      const textured=viewMode==='3d-color';
+      return {request:{...entry,textured,key:'model-pack:'+(textured?'color:':'')+entry.id},point:Number.isFinite(point?.z)?point:null,
         matched:hasOrigin,waitingHeight:sameMap&&(!hasOrigin||!Number.isFinite(point?.z))};
     }
     const region=atlas?.region||(live?lastPacket.region:null),mapId=selected?.gameMapId||(live?lastPacket.mapId:0);
@@ -606,42 +608,47 @@
   async function refreshModelPack(request,force) {
     if(sceneKey!==request.key){invalidateScene();sceneKey=request.key;}
     if(sceneBusy||(sceneTransfer&&sceneTransfer.next===sceneTransfer.pages)||(!force&&performance.now()<nextSceneFetch))return;
-    if(sceneTransfer){sceneRenderer.clear();sceneTransfer=null;}
+    const textured=request.textured;
+    if(sceneTransfer&&!textured){sceneRenderer.clear();sceneTransfer=null;}
 
     const controller=new AbortController();
     const generation=++sceneGeneration;
     sceneAbort=controller;sceneBusy=true;
-    sceneStatus('正在请求 '+request.name+' 的 3D 地图…');
+    const label=textured?'3D 彩图':'3D 地图';
+    sceneStatus('正在请求 '+request.name+' 的 '+label+'…');
     try {
-      const result=await publicModelPack.load(request,controller.signal,message=>{
-        if(generation===sceneGeneration)sceneStatus(message);
-      });
+      const result=textured?(sceneTransfer?{scene:sceneTransfer.source}:await publicColorPack.open(request,controller.signal)):
+        await publicModelPack.load(request,controller.signal,message=>{if(generation===sceneGeneration)sceneStatus(message);});
       if(generation!==sceneGeneration||controller.signal.aborted)return;
       if(!result.scene){
-        sceneStatus(result.error||'3D 地图加载失败，可重试',true);
+        sceneStatus(result.error||label+'加载失败，可重试',true);
         nextSceneFetch=Infinity;
         return;
       }
       const {pages,...geometry}=result.scene;
-      sceneTransfer={pages:pages.length,next:0};
-      sceneStatus('正在显示 3D 地图…');
-      for(let index=0;index<pages.length;++index){
-        const vertices=pages[index];
-        const page={...geometry,vertices,page:index,pages:pages.length,count:vertices.length/9,
-          surfaces:false,signature:request.key};
-        if(!sceneRenderer.addPage(page)){
-          sceneRenderer.clear();sceneTransfer=null;
-          sceneStatus('3D 图形资源暂不可用，可重试或切回 2D',true);
+      const pageCount=textured?geometry.pageCount:pages.length;
+      sceneTransfer??={pages:pageCount,next:0,source:textured?geometry:null};
+      for(let index=sceneTransfer.next;index<pageCount;++index){
+        sceneStatus('正在加载 '+label+' '+(index+1)+' / '+pageCount+'…');
+        const vertices=pages?.[index];
+        const page=textured?await geometry.readPage(index,controller.signal):
+          {...geometry,vertices,page:index,pages:pageCount,count:vertices.length/9,surfaces:false,signature:request.key};
+        if(generation!==sceneGeneration||controller.signal.aborted)return;
+        if(!page||!sceneRenderer.addPage(page)){
+          if(!textured){sceneRenderer.clear();sceneTransfer=null;}
+          sceneStatus(!page?'3D 彩图分片校验失败，可重试或切回 3D':'3D 图形资源暂不可用，可重试或切回 2D',true);
           nextSceneFetch=Infinity;
           return;
         }
-        pages[index]=null;++sceneTransfer.next;
-        if(index+1<pages.length){
+        if(pages)pages[index]=null;
+        ++sceneTransfer.next;
+        if(index+1<pageCount){
           await new Promise(resolve=>setTimeout(resolve,0));
           if(generation!==sceneGeneration)return;
         }
       }
-      sceneStatus('3D 地图已加载');
+      sceneTransfer.source=null;
+      sceneStatus(textured?'3D 彩图几何已加载':'3D 地图已加载');
       renderScene(false);
     }catch(_){
       if(generation===sceneGeneration){
@@ -814,7 +821,7 @@
     if(load)void refreshScene();
   }
   function setViewMode(value) {
-    if(!['2d','3d','3d-color'].includes(value)||(room&&!publicModelPack)||(publicModelPack&&value==='3d-color')||value===viewMode)return;
+    if(!['2d','3d','3d-color'].includes(value)||(room&&!publicModelPack)||(publicModelPack&&value==='3d-color'&&!publicColorPack)||value===viewMode)return;
     if(value!=='2d'&&!sceneRenderer) {
       sceneRenderer=sceneModel?.create(byId('sceneCanvas'),byId('sceneMarkers'),text=>{avatarAsset=null;avatarRetryAt=0;invalidateScene();sceneStatus(text,true);},byId('sceneDecorations'),text=>{const status=byId('sceneTextureStatus');status.textContent=text;status.hidden=!text||viewMode!=='3d-color';});
       if(!sceneRenderer){viewMode='3d';sceneStatus(byId('sceneStatus').textContent||'3D 组件不可用，请刷新页面',true);viewMode='2d';byId('viewMode').value='2d';return;}
@@ -988,7 +995,11 @@
     followId=id;follow2d=true;byId('followStatus').hidden=true;
     sceneRenderer?.follow();renderMarkers();
   });
-  byId('retryScene').addEventListener('click',()=>{invalidateScene();void refreshScene(true);void loadAvatar(true);});
+  byId('retryScene').addEventListener('click',()=>{
+    const canResume=publicColorPack&&viewMode==='3d-color'&&sceneTransfer?.source;
+    if(!canResume)invalidateScene();
+    void refreshScene(true);void loadAvatar(true);
+  });
   byId('retryAvatar').addEventListener('click',()=>{void loadAvatar(true);});
   for(const key of displayKeys)byId(key).addEventListener('change',()=>{
     saveDisplay();if(key==='showNames'||key==='showExits')renderAnnotations();else renderMarkers();

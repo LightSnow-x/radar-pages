@@ -24,7 +24,7 @@
        ![...origin,...minimum,...maximum].every(finite)||minimum.some((v,i)=>v>maximum[i]||origin[i]<v||origin[i]>maximum[i]))return null;
     const vertices=new Float32Array(buffer,headerBytes);
     for(const value of vertices)if(!finite(value))return null;
-    if(surfaces){const ids=new Uint32Array(buffer,headerBytes);for(let at=5;at<ids.length;at+=18)if(ids[at]>65535||ids[at]!==ids[at+6]||ids[at]!==ids[at+12])return null;}
+    if(surfaces){const ids=new Uint32Array(buffer,headerBytes),limit=expected.materialCount??65536;for(let at=5;at<ids.length;at+=18)if(ids[at]>=limit||ids[at]!==ids[at+6]||ids[at]!==ids[at+12])return null;}
     const signature=JSON.stringify([mapId,selection,revision,pages,total,terrain,flags,origin,minimum,maximum,surfaces]);
     return {vertices,count,flags,mapId,page,pages,revision,total,terrain,origin,minimum,maximum,signature,surfaces,region:expected.region};
   }
@@ -121,8 +121,11 @@
       return load.queue.splice(best,1)[0];}
     function queueTextures(load){if(surfaceLoad!==load||!load.ready)return;
       surfaceStatus(load);while(visible&&load.active<3&&load.queue.length){const item=nearestTexture(load),id=item.id;++load.active;
-        void (async()=>{let bitmap,texture;try{const response=await resource(item.url,load);const blob=await response.blob();if(blob.size>8*1024*1024)throw new Error('texture size');
-          bitmap=await createImageBitmap(blob,{premultiplyAlpha:'none',colorSpaceConversion:'none'});if(surfaceLoad!==load||lost)return;
+        void (async()=>{let bitmap,texture;try{
+          const image=load.readTexture?await load.readTexture(item.url,load.signal):{blob:await (await resource(item.url,load)).blob()};
+          if(!image||image.blob.size>8*1024*1024){if(!load.signal.aborted)load.failed.add(id);return;}
+          bitmap=await createImageBitmap(image.blob,{premultiplyAlpha:'none',colorSpaceConversion:'none'});if(surfaceLoad!==load||lost)return;
+          if(image.width&&(bitmap.width!==image.width||bitmap.height!==image.height)){load.failed.add(id);return;}
           if(bitmap.width<1||bitmap.height<1||bitmap.width>2048||bitmap.height>2048)throw new Error('texture dimensions');
           texture=gl.createTexture();if(!texture)throw new Error('texture allocation');gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);
           gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,bitmap);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
@@ -133,6 +136,11 @@
     }
     function loadSurfaces(value){if(!value.surfaces||surfaceLoad)return;const load=new AbortController();surfaceLoad=load;
       Object.assign(load,{ready:false,wanted:new Map(),failed:new Set(),queue:[],active:0,loaded:0,unsupported:0});onSurfaceStatus('正在读取官方材质和贴图…');
+      if(value.surfaceAssets){
+        materials=value.surfaceAssets.materials;
+        load.unsupported=value.surfaceAssets.unavailable;load.readTexture=value.surfaceAssets.readTexture;load.ready=true;
+        return;
+      }
       const base=`/scene/${value.region}/${value.mapId}/${value.revision}`;
       void (async()=>{try{const response=await resource(base+'/materials.json',load);const data=await response.json();if(surfaceLoad!==load)return;
         if(data.revision!==value.revision||data.mapId!==value.mapId||!Array.isArray(data.materials)||data.materials.length>65536)throw new Error('material catalog');
@@ -312,7 +320,7 @@
           if(!buffer||gl.getError()!==gl.NO_ERROR){if(buffer)gl.deleteBuffer(buffer);for(const group of groups)gl.deleteBuffer(group.buffer);return false;}
           groups.push({buffer,material,count:offsets.length*3,minimum,maximum});
         }
-        if(!scene){const {vertices,...metadata}=value;scene=metadata;}
+        if(!scene){const {vertices,surfaceAssets,...metadata}=value;scene=metadata;}
         chunks.push({groups});loadSurfaces(value);if(surfaceLoad?.ready){registerTextures(surfaceLoad,groups);queueTextures(surfaceLoad);}schedule();return true;
       },
       setAvatar(model){if(lost||!avatarRenderer?.setModel(model))return false;avatarModel=model;schedule();return true;},

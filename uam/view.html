@@ -12,13 +12,14 @@
   <script defer src="vendor/leaflet.js"></script>
   <script defer src="projection.js"></script>
   <script defer src="annotations.js"></script>
-  <script defer src="radar-3d.js?v=0dff09230076"></script>
+  <script defer src="radar-3d.js?v=7b1537e7406b"></script>
   <script defer src="radar-avatar.js"></script>
   <script defer src="vendor/fflate-0.8.3.js"></script>
   <script defer src="map-pack.js?v=browser-maps"></script>
   <script defer src="avatar-pack.js"></script>
   <script defer src="model-pack.js?v=b69f23496ab8"></script>
-  <script defer src="radar.js?v=touch-camera"></script>
+  <script defer src="color-pack.js?v=6fcf61efee0f"></script>
+  <script defer src="radar.js?v=2a22dbb21740"></script>
 </head>
 <body>
   <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
@@ -75,7 +76,7 @@
       <section id="mapControls" class="tab-panel" role="tabpanel" aria-labelledby="mapTab">
         <section class="control-section" aria-labelledby="navigationTitle">
           <div class="section-heading"><h2 id="navigationTitle">地图导航</h2><span id="mapEdition" class="mode-label">自动跟随地图</span></div>
-          <div id="viewControls"><label for="viewMode">显示模式</label><select id="viewMode"><option value="2d">2D</option><option value="3d">3D</option></select></div>
+          <div id="viewControls"><label for="viewMode">显示模式</label><select id="viewMode"><option value="2d">2D</option><option value="3d">3D</option><option value="3d-color">3D 彩图</option></select></div>
           <label class="floor-label" for="followSelect">观测目标</label><select id="followSelect"><option value="self">自己</option></select>
           <p id="followStatus" class="section-note" role="status" hidden></p>
           <button id="followScene" class="retry-button" type="button" hidden>回到观测目标</button>
