@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#09131f">
+  <title>峡谷雷达 · LOLM 网页雷达</title>
+  <link rel="stylesheet" href="../connection.css">
+  <script defer src="./transport.js?v=430752972e32" data-game="lolm" data-endpoint="ws://103.236.84.5:19558/radar-ws"></script>
+  <link rel="icon" type="image/png" href="./assets/brand/lolm-logo.png">
+  <link rel="stylesheet" href="./radar.css">
+  <script defer src="./minimap-assets.js?v=d383b4e9b63b"></script>
+  <script src="./radar.js" type="module"></script>
+</head>
+<body>
+  <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="icon-heroes" viewBox="0 0 24 24" fill="#69bfea" stroke="#f5d190"><path d="m4 3 5 2 11 14-2 2L5 9 4 3Zm16 0-5 2-3 4m-3 4-5 6 2 2 5-5M3 14l7 7m4-1 7-7"/></symbol>
+    <symbol id="icon-jungle" viewBox="0 0 24 24" stroke="#7ee99b"><path d="M12 3v18M12 15 6 9 4 4l7 5m1 6 6-6 2-5-7 5M12 20l-7-4-2-5 8 4m1 5 7-4 2-5-8 4"/></symbol>
+    <symbol id="icon-tower" viewBox="0 0 24 24" fill="#3876a2" stroke="#95dcff"><path d="M5 3v6l3 3-1 8m12-17v6l-3 3 1 8M5 5h4V2h6v3h4M4 21h16M9 9h6m-4 12v-5h2v5"/></symbol>
+    <symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8" fill="#274268" stroke="#edc679"/><path d="M12 9v4l3 2M9 2h6m-3 0v3m6 1 2-2"/></symbol>
+    <symbol id="icon-map" viewBox="0 0 24 24" fill="#357d61" stroke="#aee3a0"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Zm6-3v15m6-12v15"/></symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24"><path d="M4 7h7m4 0h5M4 17h3m4 0h9"/><circle cx="13" cy="7" r="2" fill="#e1a35e" stroke="#ffd6a3"/><circle cx="9" cy="17" r="2" fill="#69c5e0" stroke="#c1efff"/></symbol>
+    <symbol id="icon-chevron" viewBox="0 0 24 24" stroke="#adbdce"><path d="m8 5 7 7-7 7"/></symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24" stroke="#f5b3a9"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="icon-signal" viewBox="0 0 24 24" stroke="#86d9bf"><path d="M4 19v-3m5 3v-7m6 7V8m5 11V4"/></symbol>
+    <symbol id="icon-compass" viewBox="0 0 24 24" fill="#3159a6" stroke="#b8d0ff"><path d="m12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7Z"/><circle cx="12" cy="12" r="2"/></symbol>
+    <symbol id="icon-trap" viewBox="0 0 24 24" fill="#8a4361" stroke="#ffc08d"><path d="M4 12a8 8 0 0 1 16 0H4Zm5 0v7h6v-7M7 21h10"/><circle cx="9" cy="8" r="1"/><circle cx="15" cy="9" r="1"/></symbol>
+    <symbol id="icon-eye" viewBox="0 0 24 24" fill="#7253a8" stroke="#d2b7ff"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3" fill="#6edbff" stroke="#e1f4ff"/></symbol>
+    <symbol id="icon-reset" viewBox="0 0 24 24" stroke="#80d9f5"><path d="M4 10a8 8 0 1 1 1 7M4 4v6h6"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24" stroke="#82e8a2"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="icon-hide" viewBox="0 0 24 24" stroke="#f0a292"><path d="m3 3 18 18M10 5c7-2 12 7 12 7s-1 3-4 5M6 6c-3 2-4 6-4 6s4 7 10 7l3-1m-5-8a3 3 0 0 0 4 4"/></symbol>
+    <symbol id="icon-search" viewBox="0 0 24 24" stroke="#8fd4fa"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></symbol>
+    <symbol id="icon-crystal" viewBox="0 0 24 24" fill="#2583b9" stroke="#87eaff"><path d="m12 2 6 7-6 11-6-11 6-7Zm0 0v18M6 9h12M4 18v3h16v-3"/></symbol>
+    <symbol id="icon-inhibitor" viewBox="0 0 24 24" fill="#357bac" stroke="#abddff"><path d="M3 21h18M5 21V9h14v12M3 9l9-6 9 6M9 21v-7h6v7M7 6V3m10 3V3"/></symbol>
+    <symbol id="icon-fountain" viewBox="0 0 24 24" fill="#1e6ca1" stroke="#7ce6f6"><path d="M4 14h16a8 8 0 0 1-16 0Zm8 0V3m0 6C8 1 3 6 6 10m6-1c4-8 9-3 6 1M8 22h8"/></symbol>
+    <symbol id="icon-minion" viewBox="0 0 24 24" fill="#416da8" stroke="#b5d4ff"><path d="M6 13V9a6 6 0 0 1 12 0v4l-2 6H8l-2-6Zm0-2h12M12 3v6m-3 5h1m4 0h1M9 19l-1 3m7-3 1 3"/></symbol>
+    <symbol id="icon-cannon" viewBox="0 0 24 24" fill="#616fc1" stroke="#bec8ff"><circle cx="7" cy="18" r="3"/><circle cx="17" cy="18" r="3"/><path d="M7 15h10l-3-5-7 2v3Zm3-5 8-7 3 4-7 6M10 18h4"/></symbol>
+    <symbol id="icon-shield" viewBox="0 0 24 24" fill="#375c9a" stroke="#abd4ff"><path d="m12 2 8 4v6c0 5-8 10-8 10S4 17 4 12V6l8-4Zm0 5v10m-4-5h8"/></symbol>
+    <symbol id="icon-leaf" viewBox="0 0 24 24" fill="#287744" stroke="#98e8a4"><path d="M5 19C-1 7 12 3 21 3c0 10-4 20-16 16Zm-2 3L16 9m-7 7v-5m0 5h6"/></symbol>
+    <symbol id="icon-fruit" viewBox="0 0 24 24" fill="#389147" stroke="#caf47a"><path d="M12 8c-12-7-12 17 0 12 12 5 12-19 0-12Zm0 0c0-5 3-6 6-6-1 3-3 5-6 6M8 13h8m-4-4v8"/></symbol>
+    <symbol id="icon-blast" viewBox="0 0 24 24" fill="#bf5a32" stroke="#ffc584"><path d="m12 2 2 6 6-4-3 7 5 3-7 1 1 7-5-5-5 4 1-7-6-3 7-1 4-8Z"/></symbol>
+    <symbol id="icon-snow" viewBox="0 0 24 24" fill="#367da6" stroke="#a8f2ff"><path d="M12 2v20M3 7l18 10M3 17 21 7M9 3l3 3 3-3M9 21l3-3 3 3M3 10l4-1-1-4m12 14-1-4 4-1M3 14l4 1-1 4M18 5l-1 4 4 1"/></symbol>
+    <symbol id="icon-paw" viewBox="0 0 24 24" fill="#9857b8" stroke="#f0c6ff"><ellipse cx="5" cy="9" rx="2" ry="3"/><ellipse cx="10" cy="5" rx="2" ry="3"/><ellipse cx="16" cy="5" rx="2" ry="3"/><ellipse cx="21" cy="10" rx="2" ry="3"/><path d="M6 18c0-3 4-7 6-7s7 4 7 7-4 2-7 2-6 1-6-2Z"/></symbol>
+    <symbol id="icon-clone" viewBox="0 0 24 24" fill="#466eaa" stroke="#a8daff"><circle cx="9" cy="8" r="4"/><path d="M2 21v-3a7 7 0 0 1 14 0v3M16 4a4 4 0 0 1 0 8m3 3c3 1 3 3 3 6"/></symbol>
+    <symbol id="icon-spirit" viewBox="0 0 24 24" fill="#8260b3" stroke="#d7bdff"><path d="M5 21V9a7 7 0 0 1 14 0v12l-4-3-3 3-3-3-4 3Zm4-12v3m6-3v3"/></symbol>
+    <symbol id="icon-portal" viewBox="0 0 24 24" fill="#625ac1" stroke="#c3c7ff"><ellipse cx="12" cy="12" rx="7" ry="10"/><path d="M12 5c-5 0-5 14 0 14M1 12h12m-3-3 3 3-3 3m10-7 2 4-2 4"/></symbol>
+    <symbol id="icon-toolbox" viewBox="0 0 24 24" fill="#946437" stroke="#fbd18b"><path d="M3 8h18v13H3V8Zm5 0V4h8v4M3 13h18M10 11v4h4v-4"/></symbol>
+    <symbol id="icon-wall" viewBox="0 0 24 24" fill="#557189" stroke="#b8d9eb"><path d="M2 4h20v16H2V4Zm0 5h20M2 15h20M8 4v5m8-5v5M6 9v6m6-6v6m6-6v6M8 15v5m8-5v5"/></symbol>
+    <symbol id="icon-gem" viewBox="0 0 24 24" fill="#287a9c" stroke="#86e8ff"><path d="m3 8 4-5h10l4 5-9 13L3 8Zm0 0h18M7 3l5 18 5-18"/></symbol>
+  </svg>
+  <a class="skip-link" href="#mapStage">跳到地图</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand"><img class="brand-logo" src="./assets/brand/lolm-logo.png" width="480" height="152" alt="英雄联盟手游"><span class="brand-divider"></span><span class="product-name">网页雷达</span></div>
+      <div class="connection"><span id="statusDot" class="status-dot"></span><span id="status" role="status">正在连接</span><span class="latency"><svg class="icon"><use href="#icon-signal"/></svg><span id="latency">—</span></span></div>
+    </div>
+  </header>
+  <main id="workspace" class="workspace">
+    <div class="page-heading">
+      <div><span class="eyebrow"><svg class="icon" aria-hidden="true"><use href="#icon-compass"/></svg>峡谷视野 <span>/</span> LIVE RADAR</span><h1 id="mapTitle">等待战场</h1><p id="mapVariant" class="map-variant">等待识别当前战场</p></div>
+    </div>
+    <div class="workspace-grid">
+      <section class="radar-panel" aria-label="实时地图">
+        <div class="map-toolbar" role="group" aria-label="地图显示工具"><div class="layer-shortcuts" aria-label="快捷图层"><button type="button" data-layer="heroes" aria-pressed="true" title="显示或隐藏英雄标记"><svg class="icon" aria-hidden="true"><use href="#icon-heroes"/></svg><span>英雄</span></button><button type="button" data-layer="jungle" aria-pressed="true" title="显示或隐藏野怪标记"><span data-menu-art="jungle" data-art-class=""></span><span>野怪</span></button><button type="button" data-layer="timers" aria-pressed="true" title="显示或隐藏营地刷新倒计时"><span data-menu-art="clock" data-art-class=""></span><span>计时</span></button></div><button id="menuButton" class="map-settings-button" aria-label="展开图层设置" aria-controls="controls" aria-expanded="false" title="调整英雄、野区和五类地图实体的显示"><svg class="icon" aria-hidden="true"><use href="#icon-settings"/></svg><span>图层设置</span></button></div>
+        <div class="battlefield">
+          <div id="mapStage" class="map-stage" tabindex="0">
+            <canvas id="radar" aria-label="游戏地图与实时单位位置，点击标记查看详情"></canvas>
+            <div id="emptyState" class="empty-state"><svg class="waiting-emblem icon"><use href="#icon-compass"/></svg><span class="eyebrow">等待战场就绪</span><strong>等待对局数据</strong><p>保持游戏和程序运行，进入对局后自动连接。</p></div>
+          </div>
+        </div>
+        <div class="map-footer"><span class="view-indicator"><svg class="icon"><use href="#icon-compass"/></svg><span id="viewLabel">己方视角</span></span><div class="legend" aria-label="地图标记图例"><span><i class="self"></i>自己</span><span><i class="ally"></i>己方</span><span><i class="enemy"></i>敌方</span><span><i class="neutral"></i>野区</span></div></div>
+        <div id="inspection" class="inspection" role="status" hidden></div>
+        <p class="map-hint"><svg class="icon"><use href="#icon-eye"/></svg>点击地图标记，查看单位详情</p>
+      </section>
+      <aside class="intel-panel" aria-label="战场情报">
+        <section class="overview" aria-labelledby="overviewTitle"><div class="section-heading"><h2 id="overviewTitle">对局概览</h2><span class="section-index">01</span></div><div class="stats"><div class="stat"><span><svg class="icon"><use href="#icon-heroes"/></svg>英雄</span><strong id="heroCount">—</strong></div><div class="stat"><span><span data-menu-art="jungle" data-art-class=""></span>野区生物</span><strong id="monsterCount">—</strong></div><div class="stat"><span><span data-menu-art="clock" data-art-class=""></span>刷新计时</span><strong id="timerCount">—</strong></div><div class="stat"><span><span data-menu-art="tower" data-art-class=""></span>地图单位</span><strong id="unitCount">—</strong></div></div></section>
+        <section class="objectives" aria-labelledby="objectivesTitle"><div class="section-heading"><h2 id="objectivesTitle">野区动向</h2><span class="section-index">02</span></div><p id="objectiveStatus" class="section-caption">等待营地信息</p><div id="objectiveList" class="objective-list"><p class="objective-empty">营地状态将在对局开始后显示</p></div></section>
+        <div class="session-note"><svg class="icon"><use href="#icon-signal"/></svg><span id="scene">等待对局</span><span id="frameInfo">尚未同步</span></div>
+      </aside>
+    </div>
+  </main>
+  <button id="menuScrim" class="menu-scrim" aria-label="关闭显示设置" tabindex="-1" hidden></button>
+    <aside id="controls" class="controls" aria-labelledby="controlsTitle" tabindex="-1" hidden>
+      <div class="control-heading">
+        <div><span class="eyebrow">VISION CONTROL</span><h2 id="controlsTitle">图层设置</h2><p class="control-description">选择地图上需要显示的信息</p></div>
+        <button id="closeMenu" class="icon-button" aria-label="关闭图层设置"><svg class="icon"><use href="#icon-close"/></svg></button>
+      </div>
+      <div class="control-scroll">
+        <details class="control-group units-group" data-group="units" open>
+          <summary><span data-menu-art="eye" data-art-class="group-art"></span><span class="group-title"><strong>地图实体</strong><small>眼位 · 陷阱 · 泉水 · 防御塔 · 血包</small></span><span id="unitLayerCount" class="unit-total-count"></span><svg class="icon disclosure" aria-hidden="true"><use href="#icon-chevron"/></svg></summary>
+          <div class="group-body unit-layers-body">
+            <div class="unit-search"><svg class="icon" aria-hidden="true"><use href="#icon-search"/></svg><input id="unitSearch" type="search" aria-label="搜索实体类型" placeholder="搜索眼位、陷阱、防御塔…" autocomplete="off" spellcheck="false"><button id="clearUnitSearch" type="button" aria-label="清除实体搜索" hidden><svg class="icon" aria-hidden="true"><use href="#icon-close"/></svg></button></div>
+            <div class="unit-global-actions"><button id="showAllUnits" type="button" class="unit-bulk-button"><svg class="icon" aria-hidden="true"><use href="#icon-eye"/></svg><span>显示全部实体</span></button><button id="hideAllUnits" type="button" class="unit-bulk-button"><svg class="icon" aria-hidden="true"><use href="#icon-hide"/></svg><span>隐藏全部实体</span></button></div>
+            <p id="unitSearchStatus" class="unit-search-status" role="status"></p>
+            <div id="unitLayerGroups"></div>
+            <p id="unitSearchEmpty" class="unit-search-empty" hidden>没有匹配的类型，试试“眼位”或“血包”。</p>
+          </div>
+        </details>
+        <details class="control-group heroes-group" data-group="heroes">
+          <summary><svg class="icon group-icon"><use href="#icon-heroes"/></svg><span class="group-title"><strong>英雄信息</strong><small>阵营 · 头像 · 血量</small></span><span class="group-count"></span><svg class="icon disclosure"><use href="#icon-chevron"/></svg></summary>
+          <div class="group-body">
+            <label class="toggle primary-toggle"><span>显示英雄</span><input type="checkbox" data-setting="heroes" checked><i></i></label>
+            <label class="toggle"><span>英雄头像</span><input type="checkbox" data-setting="portraits" checked><i></i></label>
+            <label class="toggle"><span>生命值血条</span><input type="checkbox" data-setting="health" checked><i></i></label>
+            <label class="toggle"><span>英雄 ID</span><input type="checkbox" data-setting="labels"><i></i></label>
+            <div class="group-separator"></div>
+            <label class="toggle"><span><b class="camp-dot ally"></b>己方英雄</span><input type="checkbox" data-setting="allies" checked><i></i></label>
+            <label class="toggle"><span><b class="camp-dot enemy"></b>敌方英雄</span><input type="checkbox" data-setting="enemies" checked><i></i></label>
+            <label class="toggle"><span>仅显示可见英雄</span><input type="checkbox" data-setting="visibleOnly"><i></i></label>
+            <label class="toggle"><span>显示阵亡英雄</span><input type="checkbox" data-setting="deadHeroes"><i></i></label>
+          </div>
+        </details>
+        <details class="control-group jungle-group" data-group="jungle">
+          <summary><span data-menu-art="jungle" data-art-class="group-art"></span><span class="group-title"><strong>野区与资源</strong><small>野怪 · 营地 · 刷新时间</small></span><span class="group-count"></span><svg class="icon disclosure"><use href="#icon-chevron"/></svg></summary>
+          <div class="group-body">
+            <label class="toggle primary-toggle"><span>野怪图标</span><input type="checkbox" data-setting="jungle" checked><i></i></label>
+            <label class="toggle"><span>小野怪</span><input type="checkbox" data-setting="smallMonsters"><i></i></label>
+            <label class="toggle"><span>营地刷新倒计时</span><input type="checkbox" data-setting="timers" checked><i></i></label>
+            <label class="toggle"><span>野怪名称 / ID</span><input type="checkbox" data-setting="jungleLabels"><i></i></label>
+          </div>
+        </details>
+        <details class="control-group map-group" data-group="map">
+          <summary><svg class="icon group-icon"><use href="#icon-map"/></svg><span class="group-title"><strong>地图与连接</strong><small>视角 · 标记 · 更新频率</small></span><svg class="icon disclosure"><use href="#icon-chevron"/></svg></summary>
+          <div class="group-body">
+            <label class="toggle"><span>跟随己方视角</span><input type="checkbox" data-setting="teamView" checked><i></i></label>
+            <label class="range-label" for="markerScale"><span>标记大小</span><output id="scaleValue" for="markerScale">100%</output></label>
+            <input id="markerScale" class="marker-range" aria-label="标记大小" type="range" min="0.7" max="1.8" step="0.1" value="1">
+            <label class="select-label" for="refresh"><span>刷新间隔</span><select id="refresh"><option value="100">100 ms · 流畅</option><option value="200">200 ms · 均衡</option><option value="500">500 ms · 省流</option></select></label>
+          </div>
+        </details>
+      </div>
+      <div class="control-footer"><button id="reset" class="text-button"><svg class="icon"><use href="#icon-reset"/></svg>恢复默认设置</button><span id="settingsSaved" role="status">偏好自动保存</span></div>
+    </aside>
+  <footer class="site-footer"><span>BLACKSNOW <span class="footer-divider"></span> 峡谷战术视野</span><span>LEAGUE OF LEGENDS · WILD RIFT</span></footer>
+<p id="pages-connection" role="status" hidden></p>
+</body>
+</html>

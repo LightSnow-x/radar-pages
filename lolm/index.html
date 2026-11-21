@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#09131f">
+  <title>连接峡谷 · LOLM 网页雷达</title>
+  <link rel="icon" type="image/png" href="./assets/brand/lolm-logo.png">
+  <link rel="stylesheet" href="./radar.css">
+  <link rel="stylesheet" href="./entry.css">
+  <style>
+    .room-label {display:block;margin:25px 0 8px;color:#e0d3aa;font-size:13px;font-weight:600}
+    .room-input {box-sizing:border-box;width:100%;padding:12px 18px;border:1px solid #a78b576a;
+      border-radius:8px;background:#0c1929;color:#f6e7bd;letter-spacing:.35em;font:600 26px/1.2 system-ui}
+    .room-input:focus-visible {outline:2px solid #d9b973;outline-offset:2px}
+    .room-note {min-height:2.7em;margin:9px 0 15px;color:#a2b3c6;font-size:12px}
+    .room-note.error {color:#f5af91}
+    .room-back {display:inline-block;margin-top:18px;color:#c4b587;font-size:12px}
+    @media (max-width:800px) {.entry-layout>.entry-panel {order:-1;justify-self:center}}
+  </style>
+  <script defer src="../entry.js?v=20261120-room-design"></script>
+</head>
+<body class="entry-body">
+  <header class="entry-header">
+    <a class="brand" href="../" aria-label="返回雷达大厅">
+      <img class="brand-logo" src="./assets/brand/lolm-logo.png" width="480" height="152" alt="英雄联盟手游">
+      <span class="brand-divider"></span><span class="product-name">网页雷达</span>
+    </a>
+  </header>
+  <main class="entry-layout">
+    <section class="entry-story" aria-label="召唤师峡谷">
+      <h1>峡谷雷达</h1>
+      <figure class="atlas-figure">
+        <div class="atlas-board"><img src="./assets/maps/scene_battle_ionia.png" width="512" height="512" alt="召唤师峡谷底图"></div>
+        <figcaption>召唤师峡谷</figcaption>
+      </figure>
+    </section>
+    <section class="entry-panel" aria-labelledby="entryTitle">
+      <div class="entry-panel-heading"><h2 id="entryTitle">登录雷达房间</h2></div>
+      <p class="entry-panel-intro">在 LOLM 的「调节 → 雷达共享」开启网页雷达，输入设备上显示的房号。</p>
+      <form action="./view.html" method="get" data-radar-entry data-complete-room data-room-hints>
+        <label for="room" class="room-label">四位房间号</label>
+        <input id="room" class="room-input" name="room" type="text" inputmode="numeric" autocomplete="off"
+               pattern="[0-9]{4}" maxlength="4" placeholder="0000" required aria-describedby="room-status">
+        <p id="room-status" class="room-note" data-room-status role="status">支持以 0 开头的房间号。</p>
+        <button type="submit" class="connect-button" disabled>进入雷达</button>
+      </form>
+      <a class="room-back" href="../">返回雷达大厅</a>
+    </section>
+  </main>
+</body>
+</html>
