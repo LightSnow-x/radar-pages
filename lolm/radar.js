@@ -1,8 +1,8 @@
 'use strict';
-import { createRadarUi } from './radar-ui.js';
-import { assetImageUrl, mapImageUrl, localIconUrl, unitIconSize, unitHasHealthBar, drawLocalIcon } from './radar-unit-icons.js';
-import { selectVisibleUnits } from './radar-unit-layers.js';
-import { createImageCache } from './radar-image-cache.js';
+import { createRadarUi } from './radar-ui.js?v=2ca97a8c86db';
+import { heroPortraitUrl, mapImageUrl, localIconUrl, unitIconSize, unitHasHealthBar, drawLocalIcon } from './radar-unit-icons.js?v=2ca97a8c86db';
+import { selectVisibleUnits } from './radar-unit-layers.js?v=2ca97a8c86db';
+import { createImageCache } from './radar-image-cache.js?v=2ca97a8c86db';
 (() => {
   const ui = createRadarUi();
   const settings = ui.settings;
@@ -12,7 +12,8 @@ import { createImageCache } from './radar-image-cache.js';
   const imageCache=createImageCache();
   const image=url=>imageCache.get(url);
   function prepareImages(data) {
-    if(settings.portraits)for(const hero of data.heroes)image(assetImageUrl(`/assets/heroes/${hero.id}.png`,data));
+    if(settings.portraits)for(const hero of data.heroes)image(heroPortraitUrl(hero.id,data));
+    if(shared) return;
     for(const unit of selectVisibleUnits(data.units,settings.unitTypes)) {
       image(localIconUrl(unit.fallbackIcon,data));
       image(localIconUrl(unit.icon,data));
@@ -55,10 +56,10 @@ import { createImageCache } from './radar-image-cache.js';
       // Loading/missing pictures do not manufacture a second geometric marker.
     }
   }
-  function drawJungle(){if(settings.jungle)for(const monster of frame.monsters){if(monster.dead||monster.small&&!settings.smallMonsters)continue;const p=uv(monster,'monsters');if(!p)continue;const[x,y]=p,r=(monster.small?4.5:9)*settings.markerScale;neutral(monster,x,y,r);bar(monster,x,y+r+3,r*2);if(settings.jungleLabels)label(poiNames[monster.poi]||`#${monster.id}`,x,y+r+12,'#dfca96',9);hits.push({x,y,r:Math.max(r,10),item:monster,type:'野怪'});}if(settings.timers)for(const timer of frame.timers){if(!(timer.seconds>0))continue;const p=uv(timer,'timers');if(!p)continue;const[x,y]=p,r=11*settings.markerScale;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle='#09202be6';ctx.fill();ctx.strokeStyle='#d1ac62';ctx.lineWidth=1.2;ctx.stroke();const minutes=Math.floor(timer.seconds/60),seconds=timer.seconds%60;label(minutes?`${minutes}:${String(seconds).padStart(2,'0')}`:String(seconds),x,y,'#f3d9a2',10*settings.markerScale);if(settings.jungleLabels)label(poiNames[timer.poi]||`#${timer.id}`,x,y+r+9,'#dfca96',9);hits.push({x,y,r:Math.max(r,11),item:timer,type:'刷新计时'});}}
-  function drawHeroes(){if(!settings.heroes)return;for(const hero of frame.heroes){const ally=hero.camp===frame.localCamp;if(ally&&!settings.allies||!ally&&!settings.enemies||hero.dead&&!settings.deadHeroes||settings.visibleOnly&&!hero.visible)continue;const p=uv(hero,'heroes');if(!p)continue;const[x,y]=p,r=(hero.local?15:12)*settings.markerScale,color=hero.dead?'#7b929e':hero.local?'#91f2cb':campColor(hero.camp);ctx.save();ctx.shadowColor=color;ctx.shadowBlur=hero.local?8:3;ctx.beginPath();ctx.arc(x,y,r+1,0,Math.PI*2);ctx.fillStyle='#101d29';ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=hero.local?2.5:2;ctx.stroke();ctx.shadowBlur=0;const portrait=settings.portraits?image(assetImageUrl(`/assets/heroes/${hero.id}.png`,frame)):null;if(portrait){ctx.save();ctx.beginPath();ctx.arc(x,y,r-1,0,Math.PI*2);ctx.clip();ctx.globalAlpha=hero.dead ? .4 : 1;ctx.drawImage(portrait,x-r,y-r,r*2,r*2);ctx.restore();}else label(String(hero.id).slice(-3),x,y,color,Math.max(8,r*.65));ctx.restore();bar(hero,x,y+r+4,r*2);if(settings.labels)label(`#${hero.id}`,x,y-r-9,color,10);hits.push({x,y,r:r+3,item:hero,type:'英雄'});}}
-  function render(){ctx.clearRect(0,0,size,size);ctx.fillStyle='#0b1820';ctx.fillRect(0,0,size,size);hits=[];if(frame&&frame.ready){const name=frame.map.name;const art=image(mapImageUrl(name));if(art){ctx.save();if(settings.teamView&&frame.map.rotate180){ctx.translate(size,size);ctx.rotate(Math.PI);}const crop=Array.isArray(frame.map.crop)&&frame.map.crop.length===4&&frame.map.crop.every(Number.isFinite)?frame.map.crop:[0,0,1,1];ctx.drawImage(art,crop[0]*art.width,crop[1]*art.height,crop[2]*art.width,crop[3]*art.height,0,0,size,size);ctx.restore();byId('emptyState').hidden=true;}else empty(name?'地图资源加载中':'等待地图名称',name?`当前底图：${name}。未包含的底图会保留空白。`:'正在读取游戏当前的小地图纹理。');ctx.fillStyle='#07111b28';ctx.fillRect(0,0,size,size);drawUnits();drawJungle();drawHeroes();if(performance.now()-lastAdvance>1500){status('对局数据已暂停',false);empty('等待对局更新','程序或游戏没有提供新的帧，旧标记已隐藏。');ctx.clearRect(0,0,size,size);hits=[];frame=null;previous=null;ui.clearFrame();}}requestAnimationFrame(render);}requestAnimationFrame(render);
-  canvas.addEventListener('click',event=>{const rect=canvas.getBoundingClientRect(),x=event.clientX-rect.left,y=event.clientY-rect.top;const hit=[...hits].reverse().find(h=>Math.hypot(h.x-x,h.y-y)<=h.r+3);const panel=byId('inspection');if(!hit){panel.hidden=true;return;}const item=hit.item;const lines=[`${hit.type} · ID ${item.id}`,item.objectId?`对象 ID ${item.objectId}`:item.anchorId?`营地 ID ${item.anchorId}`:'',item.roleId?`角色 ID ${item.roleId}`:'',Array.isArray(item.world)?`坐标 ${item.world.map(n=>Number(n).toFixed(2)).join(' / ')}`:'',item.hp!==undefined&&item.hp!==null?`血量 ${Math.round(item.hp)} / ${Math.round(item.maxHp)}`:'',item.seconds!==undefined&&item.seconds!==null?`刷新剩余 ${item.seconds} 秒`:'',item.skills?`技能 ID ${item.skills.map(s=>s.id).join('、')}`:''];panel.textContent=lines.filter(Boolean).join('\n');panel.hidden=false;});
+  function drawJungle(){if(!shared&&settings.jungle)for(const monster of frame.monsters){if(monster.dead||monster.small&&!settings.smallMonsters)continue;const p=uv(monster,'monsters');if(!p)continue;const[x,y]=p,r=(monster.small?4.5:9)*settings.markerScale;neutral(monster,x,y,r);bar(monster,x,y+r+3,r*2);if(settings.jungleLabels)label(poiNames[monster.poi]||`#${monster.id}`,x,y+r+12,'#dfca96',9);hits.push({x,y,r:Math.max(r,10),item:monster,type:'野怪'});}if(settings.timers)for(const timer of frame.timers){if(!(timer.seconds>0))continue;const p=uv(timer,'timers');if(!p)continue;const[x,y]=p,r=11*settings.markerScale;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle='#09202be6';ctx.fill();ctx.strokeStyle='#d1ac62';ctx.lineWidth=1.2;ctx.stroke();const minutes=Math.floor(timer.seconds/60),seconds=timer.seconds%60;label(minutes?`${minutes}:${String(seconds).padStart(2,'0')}`:String(seconds),x,y,'#f3d9a2',10*settings.markerScale);if(settings.jungleLabels)label(poiNames[timer.poi]||`#${timer.id}`,x,y+r+9,'#dfca96',9);hits.push({x,y,r:Math.max(r,11),item:timer,type:'刷新计时'});}}
+  function drawHeroes(){if(!settings.heroes)return;for(const hero of frame.heroes){const ally=hero.camp===frame.localCamp;if(ally&&!settings.allies||!ally&&!settings.enemies||hero.dead&&!settings.deadHeroes||!shared&&settings.visibleOnly&&!hero.visible)continue;const p=uv(hero,'heroes');if(!p)continue;const[x,y]=p,r=(hero.local?15:12)*settings.markerScale,color=hero.dead?'#7b929e':hero.local?'#91f2cb':campColor(hero.camp);ctx.save();ctx.shadowColor=color;ctx.shadowBlur=hero.local?8:3;ctx.beginPath();ctx.arc(x,y,r+1,0,Math.PI*2);ctx.fillStyle='#101d29';ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=hero.local?2.5:2;ctx.stroke();ctx.shadowBlur=0;const portrait=settings.portraits?image(heroPortraitUrl(hero.id,frame)):null;if(portrait){ctx.save();ctx.beginPath();ctx.arc(x,y,r-1,0,Math.PI*2);ctx.clip();ctx.globalAlpha=hero.dead ? .4 : 1;ctx.drawImage(portrait,x-r,y-r,r*2,r*2);ctx.restore();}else label(String(hero.id).slice(-3),x,y,color,Math.max(8,r*.65));ctx.restore();bar(hero,x,y+r+4,r*2);if(settings.labels)label(`#${hero.id}`,x,y-r-9,color,10);hits.push({x,y,r:r+3,item:hero,type:'英雄'});}}
+  function render(){ctx.clearRect(0,0,size,size);ctx.fillStyle='#0b1820';ctx.fillRect(0,0,size,size);hits=[];if(frame&&frame.ready){const name=frame.map.name;const art=image(mapImageUrl(name));if(art){ctx.save();if(settings.teamView&&frame.map.rotate180){ctx.translate(size,size);ctx.rotate(Math.PI);}const crop=Array.isArray(frame.map.crop)&&frame.map.crop.length===4&&frame.map.crop.every(Number.isFinite)?frame.map.crop:[0,0,1,1];ctx.drawImage(art,crop[0]*art.width,crop[1]*art.height,crop[2]*art.width,crop[3]*art.height,0,0,size,size);ctx.restore();byId('emptyState').hidden=true;}else empty(name?'地图资源加载中':'等待地图名称',name?`当前底图：${name}。未包含的底图会保留空白。`:'正在读取游戏当前的小地图纹理。');ctx.fillStyle='#07111b28';ctx.fillRect(0,0,size,size);if(shared)drawSharedLanes();else drawUnits();drawJungle();drawHeroes();if(performance.now()-lastAdvance>1500){status('对局数据已暂停',false);empty('等待对局更新','程序或游戏没有提供新的帧，旧标记已隐藏。');ctx.clearRect(0,0,size,size);hits=[];frame=null;previous=null;ui.clearFrame();}}requestAnimationFrame(render);}requestAnimationFrame(render);
+  canvas.addEventListener('click',event=>{const rect=canvas.getBoundingClientRect(),x=event.clientX-rect.left,y=event.clientY-rect.top;const hit=[...hits].reverse().find(h=>Math.hypot(h.x-x,h.y-y)<=h.r+3);const panel=byId('inspection');if(!hit){panel.hidden=true;return;}const item=hit.item;const lines=[`${hit.type} · ID ${item.id}`,!shared&&item.objectId?`对象 ID ${item.objectId}`:item.anchorId?`营地 ID ${item.anchorId}`:'',item.roleId?`角色 ID ${item.roleId}`:'',Array.isArray(item.world)?`坐标 ${item.world.map(n=>Number(n).toFixed(2)).join(' / ')}`:'',item.hp!==undefined&&item.hp!==null?`血量 ${Math.round(item.hp)} / ${Math.round(item.maxHp)}`:'',item.seconds!==undefined&&item.seconds!==null?`刷新剩余 ${item.seconds} 秒`:'',item.skills?`技能 ID ${item.skills.map(s=>s.id).join('、')}`:''];panel.textContent=lines.filter(Boolean).join('\n');panel.hidden=false;});
   function clearFrame(message, title, detail) {
     frame = null;
     previous = null;
@@ -66,6 +67,20 @@ import { createImageCache } from './radar-image-cache.js';
     empty(title, detail);
     byId('inspection').hidden = true;
     ui.clearFrame();
+  }
+
+  function drawSharedLanes() {
+    if (!settings.lanes || !Array.isArray(frame.lanes)) return;
+    const radius = Math.max(1.5, 2.4 * settings.markerScale);
+    const scale = size / 10000;
+    const rotated = !settings.teamView && frame.map.rotate180;
+    for (const [camp, x, y] of frame.lanes) {
+      ctx.beginPath();
+      ctx.arc(rotated ? size - x * scale : x * scale, rotated ? size - y * scale : y * scale,
+        radius, 0, Math.PI * 2);
+      ctx.fillStyle = campColor(camp);
+      ctx.fill();
+    }
   }
 
   function acceptFrame(data) {

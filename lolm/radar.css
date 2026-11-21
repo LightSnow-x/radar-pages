@@ -184,3 +184,7 @@ body.drawer-open { overflow: hidden; }
 }
 @media (max-width: 350px) { .workspace { padding-left: 14px; padding-right: 14px; }.layer-shortcuts button { padding: 7px 6px; gap: 4px; }.layer-shortcuts .icon { width: 15px; height: 15px; }.map-settings-button { padding: 8px 6px; }.legend { gap: 7px; }.stat .icon { display: none; }.control-heading, .control-footer { padding-left: 22px; padding-right: 22px; }.control-scroll { padding-left: 22px; padding-right: 22px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+.radar-public [data-lan-only] { display: none; }
+body:not(.radar-public) [data-web-only] { display: none; }
+.radar-public .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }

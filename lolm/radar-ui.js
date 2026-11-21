@@ -1,12 +1,12 @@
-import { localIconUrl } from './radar-unit-icons.js';
-import { createUnitVisibility } from './radar-unit-layers.js';
-import { createUnitMenu } from './radar-unit-menu.js';
-import { applyMenuArt } from './radar-menu-icons.js';
+import { localIconUrl } from './radar-unit-icons.js?v=2ca97a8c86db';
+import { createUnitVisibility } from './radar-unit-layers.js?v=2ca97a8c86db';
+import { createUnitMenu } from './radar-unit-menu.js?v=2ca97a8c86db';
+import { applyMenuArt } from './radar-menu-icons.js?v=2ca97a8c86db';
 
 const SETTINGS_KEY = 'lolm-lan-radar-v1';
 const LAYOUT_KEY = 'lolm-lan-radar-layout-v1';
 const DEFAULTS = Object.freeze({
-  heroes: true, portraits: true, health: true, labels: false, allies: true, enemies: true,
+  heroes: true, portraits: true, health: true, labels: false, allies: true, enemies: true, lanes: true,
   visibleOnly: false, deadHeroes: false, jungle: true, smallMonsters: false, timers: true,
   jungleLabels: false, teamView: true, markerScale: 1, refresh: 100
 });
@@ -197,7 +197,8 @@ export function createRadarUi() {
 
   function updateObjectives() {
     const timers = currentFrame && settings.timers ? currentFrame.timers.filter(item => Number.isFinite(item.seconds) && item.seconds > 0).sort((a, b) => a.seconds - b.seconds) : [];
-    const monsters = currentFrame && settings.jungle ? currentFrame.monsters.filter(item => !item.dead && !item.small && item.primary) : [];
+    const monsters = currentFrame && !globalThis.RadarPages && settings.jungle ?
+      currentFrame.monsters.filter(item => !item.dead && !item.small && item.primary) : [];
     const entries = [...timers.map(item => ({ item, timer: true })), ...monsters.map(item => ({ item, timer: false }))].slice(0, 6);
     const signature = JSON.stringify([Boolean(currentFrame), currentFrame?.generation, currentFrame?.assetRevision, settings.jungle, settings.timers, entries.map(({ item, timer }) => [item.id, item.anchorId, item.objectId, item.poi, localIconUrl(item.icon, currentFrame), item.seconds, timer])]);
     if (signature === objectivesSignature) return;
@@ -238,7 +239,8 @@ export function createRadarUi() {
     byId('scene').title = `${data.map.scene || ''} · ${name}`;
     byId('frameInfo').textContent = `同步 #${data.sequence}`;
     for (const [key, id] of [['heroes', 'heroCount'], ['monsters', 'monsterCount'], ['timers', 'timerCount'], ['units', 'unitCount']]) {
-      byId(id).textContent = key === 'timers' ? data.timers.filter(item => Number.isFinite(item.seconds) && item.seconds > 0).length : data[key].length;
+      const items = key === 'units' && globalThis.RadarPages ? (data.lanes ?? []) : data[key];
+      byId(id).textContent = key === 'timers' ? items.filter(item => Number.isFinite(item.seconds) && item.seconds > 0).length : items.length;
     }
     if (changedSession) byId('inspection').hidden = true;
     updateView();

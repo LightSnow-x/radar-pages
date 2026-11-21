@@ -1,5 +1,5 @@
-import { UNIT_LAYER_GROUPS, UNIT_LAYERS, matchesUnitSearch, setUnitVisibility } from './radar-unit-layers.js';
-import { createMenuArt, createMenuSymbol as symbol } from './radar-menu-icons.js';
+import { UNIT_LAYER_GROUPS, UNIT_LAYERS, matchesUnitSearch, setUnitVisibility } from './radar-unit-layers.js?v=2ca97a8c86db';
+import { createMenuArt, createMenuSymbol as symbol } from './radar-menu-icons.js?v=2ca97a8c86db';
 
 function element(tag, className, text) {
   const node = document.createElement(tag);

@@ -8,11 +8,10 @@
   <link rel="stylesheet" href="../connection.css">
   <script defer src="./transport.js?v=430752972e32" data-game="lolm" data-endpoint="ws://103.236.84.5:19558/radar-ws"></script>
   <link rel="icon" type="image/png" href="./assets/brand/lolm-logo.png">
-  <link rel="stylesheet" href="./radar.css">
-  <script defer src="./minimap-assets.js?v=d383b4e9b63b"></script>
-  <script src="./radar.js" type="module"></script>
+  <link rel="stylesheet" href="./radar.css?v=2ca97a8c86db">
+  <script src="./radar.js?v=2ca97a8c86db" type="module"></script>
 </head>
-<body>
+<body class="radar-public">
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <symbol id="icon-heroes" viewBox="0 0 24 24" fill="#69bfea" stroke="#f5d190"><path d="m4 3 5 2 11 14-2 2L5 9 4 3Zm16 0-5 2-3 4m-3 4-5 6 2 2 5-5M3 14l7 7m4-1 7-7"/></symbol>
     <symbol id="icon-jungle" viewBox="0 0 24 24" stroke="#7ee99b"><path d="M12 3v18M12 15 6 9 4 4l7 5m1 6 6-6 2-5-7 5M12 20l-7-4-2-5 8 4m1 5 7-4 2-5-8 4"/></symbol>
@@ -61,7 +60,7 @@
     </div>
     <div class="workspace-grid">
       <section class="radar-panel" aria-label="实时地图">
-        <div class="map-toolbar" role="group" aria-label="地图显示工具"><div class="layer-shortcuts" aria-label="快捷图层"><button type="button" data-layer="heroes" aria-pressed="true" title="显示或隐藏英雄标记"><svg class="icon" aria-hidden="true"><use href="#icon-heroes"/></svg><span>英雄</span></button><button type="button" data-layer="jungle" aria-pressed="true" title="显示或隐藏野怪标记"><span data-menu-art="jungle" data-art-class=""></span><span>野怪</span></button><button type="button" data-layer="timers" aria-pressed="true" title="显示或隐藏营地刷新倒计时"><span data-menu-art="clock" data-art-class=""></span><span>计时</span></button></div><button id="menuButton" class="map-settings-button" aria-label="展开图层设置" aria-controls="controls" aria-expanded="false" title="调整英雄、野区和五类地图实体的显示"><svg class="icon" aria-hidden="true"><use href="#icon-settings"/></svg><span>图层设置</span></button></div>
+        <div class="map-toolbar" role="group" aria-label="地图显示工具"><div class="layer-shortcuts" aria-label="快捷图层"><button type="button" data-layer="heroes" aria-pressed="true" title="显示或隐藏英雄标记"><svg class="icon" aria-hidden="true"><use href="#icon-heroes"/></svg><span>英雄</span></button><button type="button" data-layer="jungle" data-lan-only aria-pressed="true" title="显示或隐藏野怪标记"><span data-menu-art="jungle" data-art-class=""></span><span>野怪</span></button><button type="button" data-web-only data-layer="lanes" aria-pressed="true" title="显示或隐藏兵线"><span data-menu-art="tower" data-art-class=""></span><span>兵线</span></button><button type="button" data-layer="timers" aria-pressed="true" title="显示或隐藏营地刷新倒计时"><span data-menu-art="clock" data-art-class=""></span><span>计时</span></button></div><button id="menuButton" class="map-settings-button" aria-label="展开图层设置" aria-controls="controls" aria-expanded="false" title="调整英雄、兵线和野怪计时的显示"><svg class="icon" aria-hidden="true"><use href="#icon-settings"/></svg><span>图层设置</span></button></div>
         <div class="battlefield">
           <div id="mapStage" class="map-stage" tabindex="0">
             <canvas id="radar" aria-label="游戏地图与实时单位位置，点击标记查看详情"></canvas>
@@ -73,8 +72,8 @@
         <p class="map-hint"><svg class="icon"><use href="#icon-eye"/></svg>点击地图标记，查看单位详情</p>
       </section>
       <aside class="intel-panel" aria-label="战场情报">
-        <section class="overview" aria-labelledby="overviewTitle"><div class="section-heading"><h2 id="overviewTitle">对局概览</h2><span class="section-index">01</span></div><div class="stats"><div class="stat"><span><svg class="icon"><use href="#icon-heroes"/></svg>英雄</span><strong id="heroCount">—</strong></div><div class="stat"><span><span data-menu-art="jungle" data-art-class=""></span>野区生物</span><strong id="monsterCount">—</strong></div><div class="stat"><span><span data-menu-art="clock" data-art-class=""></span>刷新计时</span><strong id="timerCount">—</strong></div><div class="stat"><span><span data-menu-art="tower" data-art-class=""></span>地图单位</span><strong id="unitCount">—</strong></div></div></section>
-        <section class="objectives" aria-labelledby="objectivesTitle"><div class="section-heading"><h2 id="objectivesTitle">野区动向</h2><span class="section-index">02</span></div><p id="objectiveStatus" class="section-caption">等待营地信息</p><div id="objectiveList" class="objective-list"><p class="objective-empty">营地状态将在对局开始后显示</p></div></section>
+        <section class="overview" aria-labelledby="overviewTitle"><div class="section-heading"><h2 id="overviewTitle">对局概览</h2><span class="section-index">01</span></div><div class="stats"><div class="stat"><span><svg class="icon"><use href="#icon-heroes"/></svg>英雄</span><strong id="heroCount">—</strong></div><div class="stat" data-lan-only><span><span data-menu-art="jungle" data-art-class=""></span>野区生物</span><strong id="monsterCount">—</strong></div><div class="stat"><span><span data-menu-art="clock" data-art-class=""></span>刷新计时</span><strong id="timerCount">—</strong></div><div class="stat"><span><span data-menu-art="tower" data-art-class=""></span>兵线单位</span><strong id="unitCount">—</strong></div></div></section>
+        <section class="objectives" aria-labelledby="objectivesTitle"><div class="section-heading"><h2 id="objectivesTitle">野怪刷新计时</h2><span class="section-index">02</span></div><p id="objectiveStatus" class="section-caption">等待营地信息</p><div id="objectiveList" class="objective-list"><p class="objective-empty">营地状态将在对局开始后显示</p></div></section>
         <div class="session-note"><svg class="icon"><use href="#icon-signal"/></svg><span id="scene">等待对局</span><span id="frameInfo">尚未同步</span></div>
       </aside>
     </div>
@@ -86,7 +85,7 @@
         <button id="closeMenu" class="icon-button" aria-label="关闭图层设置"><svg class="icon"><use href="#icon-close"/></svg></button>
       </div>
       <div class="control-scroll">
-        <details class="control-group units-group" data-group="units" open>
+        <details class="control-group units-group" data-lan-only data-group="units" open>
           <summary><span data-menu-art="eye" data-art-class="group-art"></span><span class="group-title"><strong>地图实体</strong><small>眼位 · 陷阱 · 泉水 · 防御塔 · 血包</small></span><span id="unitLayerCount" class="unit-total-count"></span><svg class="icon disclosure" aria-hidden="true"><use href="#icon-chevron"/></svg></summary>
           <div class="group-body unit-layers-body">
             <div class="unit-search"><svg class="icon" aria-hidden="true"><use href="#icon-search"/></svg><input id="unitSearch" type="search" aria-label="搜索实体类型" placeholder="搜索眼位、陷阱、防御塔…" autocomplete="off" spellcheck="false"><button id="clearUnitSearch" type="button" aria-label="清除实体搜索" hidden><svg class="icon" aria-hidden="true"><use href="#icon-close"/></svg></button></div>
@@ -106,15 +105,15 @@
             <div class="group-separator"></div>
             <label class="toggle"><span><b class="camp-dot ally"></b>己方英雄</span><input type="checkbox" data-setting="allies" checked><i></i></label>
             <label class="toggle"><span><b class="camp-dot enemy"></b>敌方英雄</span><input type="checkbox" data-setting="enemies" checked><i></i></label>
-            <label class="toggle"><span>仅显示可见英雄</span><input type="checkbox" data-setting="visibleOnly"><i></i></label>
+            <label class="toggle" data-lan-only><span>仅显示可见英雄</span><input type="checkbox" data-setting="visibleOnly"><i></i></label>
             <label class="toggle"><span>显示阵亡英雄</span><input type="checkbox" data-setting="deadHeroes"><i></i></label>
           </div>
         </details>
         <details class="control-group jungle-group" data-group="jungle">
-          <summary><span data-menu-art="jungle" data-art-class="group-art"></span><span class="group-title"><strong>野区与资源</strong><small>野怪 · 营地 · 刷新时间</small></span><span class="group-count"></span><svg class="icon disclosure"><use href="#icon-chevron"/></svg></summary>
+          <summary><span data-menu-art="jungle" data-art-class="group-art"></span><span class="group-title"><strong>野区与资源</strong><small>营地刷新时间</small></span><span class="group-count"></span><svg class="icon disclosure"><use href="#icon-chevron"/></svg></summary>
           <div class="group-body">
-            <label class="toggle primary-toggle"><span>野怪图标</span><input type="checkbox" data-setting="jungle" checked><i></i></label>
-            <label class="toggle"><span>小野怪</span><input type="checkbox" data-setting="smallMonsters"><i></i></label>
+            <label class="toggle primary-toggle" data-lan-only><span>野怪图标</span><input type="checkbox" data-setting="jungle" checked><i></i></label>
+            <label class="toggle" data-lan-only><span>小野怪</span><input type="checkbox" data-setting="smallMonsters"><i></i></label>
             <label class="toggle"><span>营地刷新倒计时</span><input type="checkbox" data-setting="timers" checked><i></i></label>
             <label class="toggle"><span>野怪名称 / ID</span><input type="checkbox" data-setting="jungleLabels"><i></i></label>
           </div>

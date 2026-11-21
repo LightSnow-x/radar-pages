@@ -12,19 +12,22 @@ export function unitHasHealthBar(unit) {
 }
 
 export function localIconUrl(route, frame) {
-  if (typeof route !== 'string' || route.includes('..') ||
+  if (web || typeof route !== 'string' || route.includes('..') ||
       route.length > 1100 || !/^\/assets\/local-minimap\/(?:(?:dynamic\/)?[a-z0-9_.-]+|resource\/[0-9a-f]+)\.png$/.test(route)) return null;
   return assetImageUrl(route, frame);
 }
 
 export function assetImageUrl(route, frame) {
-  if (web) {
-    const icon = /^\/assets\/local-minimap\/([a-z0-9_.-]+\.png)$/.exec(route);
-    return icon && !icon[1].includes('..') ? globalThis.LolmRadarIcons?.[icon[1]] ?? null : null;
-  }
   const revision = frame.assetVersions?.[route];
   const suffix = Number.isSafeInteger(revision) && revision > 0 ? `_${revision}` : '';
   return `${route}?v=${frame.generation}_${frame.assetRevision || 0}${suffix}`;
+}
+
+export function heroPortraitUrl(id, frame) {
+  if (!Number.isSafeInteger(id) || id <= 0) return null;
+  return web
+    ? `https://game.gtimg.cn/images/lgamem/act/lrlib/img/HeadIcon/H_S_${id}.png`
+    : assetImageUrl(`/assets/heroes/${id}.png`, frame);
 }
 
 export function unitIconSize(image, markerScale, unit) {
