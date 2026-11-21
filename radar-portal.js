@@ -1,6 +1,53 @@
 'use strict';
 
 (() => {
+  const endpoint = document.querySelector('.radar-online')?.dataset.viewerCountUrl;
+  const display = document.getElementById('radar-online-total');
+  if (!endpoint || !display) return;
+  const number = new Intl.NumberFormat('zh-CN');
+  let connection;
+
+  function show(total) {
+    const label = Number.isSafeInteger(total) && total >= 0 ? number.format(total) : '—';
+    if (display.textContent !== label) display.textContent = label;
+  }
+
+  function refresh() {
+    if (connection || document.hidden) return;
+    let socket;
+    try {
+      socket = new WebSocket(endpoint);
+    } catch (_) {
+      show(null);
+      return;
+    }
+    connection = socket;
+    const timeout = setTimeout(() => finish(null), 4000);
+    function finish(total) {
+      if (connection !== socket) return;
+      connection = undefined;
+      clearTimeout(timeout);
+      if (socket.readyState < WebSocket.CLOSING) socket.close();
+      show(total);
+    }
+    socket.addEventListener('message', ({ data }) => {
+      try {
+        const packet = JSON.parse(data);
+        finish(packet?.type === 'viewer-count' ? packet.total : null);
+      } catch (_) {
+        finish(null);
+      }
+    });
+    socket.addEventListener('error', () => finish(null));
+    socket.addEventListener('close', () => finish(null));
+  }
+
+  refresh();
+  document.addEventListener('visibilitychange', refresh);
+  setInterval(refresh, 5000);
+})();
+
+(() => {
   const welcome = document.getElementById('welcome');
   const openButton = document.getElementById('show-intro');
   const canvas = document.getElementById('snow');

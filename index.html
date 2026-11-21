@@ -11,8 +11,8 @@
   <link rel="icon" href="./lightsnow.ico">
   <link rel="license" href="./OFL-Noto-Serif-SC.txt">
   <link rel="preload" as="font" href="./portal-display.woff2" crossorigin>
-  <link rel="stylesheet" href="./radar-portal.css?v=chat-first-20261120">
-  <script src="./radar-portal.js?v=fast-lobby-20261119" defer></script>
+  <link rel="stylesheet" href="./radar-portal.css?v=87d976c3fda1">
+  <script src="./radar-portal.js?v=87d976c3fda1" defer></script>
 </head>
 <body>
   <picture class="scenery" aria-hidden="true">
@@ -29,6 +29,9 @@
     </a>
     <nav class="primary-nav" aria-label="主导航"><a class="selected" href="#games" aria-current="page">大厅</a><a href="./online/">在线统计</a></nav>
     <div class="header-tools">
+      <div class="radar-online" data-viewer-count-url="ws://103.236.84.5:19558/radar-ws/viewer-count" role="status" aria-atomic="true">
+        <span>雷达总在线</span><strong id="radar-online-total">—</strong>
+      </div>
       <button class="icon-button" id="show-intro" type="button" aria-label="重新查看欢迎页" title="重新查看欢迎页" hidden><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.35"/><path d="M12 11v5M12 7.5v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
       <span class="tool-divider" aria-hidden="true"></span>
       <button class="snow-toggle icon-button" type="button" aria-pressed="false" title="飘雪开关" hidden><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9 4.5 12 7l3-2.5M9 19.5 12 17l3 2.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sr-only">飘雪 <span class="snow-status">关</span></span></button>
