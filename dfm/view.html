@@ -9,10 +9,10 @@
   <script defer src="../transport.js" data-game="dfm" data-endpoint="ws://103.236.84.5:19558/radar-ws"></script>
   <link rel="stylesheet" href="./vendor/leaflet.css">
   <link rel="stylesheet" href="./web.css">
-  <link rel="stylesheet" href="./scene.css?v=88308d524049">
+  <link rel="stylesheet" href="./scene.css?v=81f76edb3b07">
   <script defer src="./vendor/leaflet.js"></script>
-  <script defer src="./scene.js?v=e8653af71ce8"></script>
-  <script type="module" src="./room.mjs?v=06079e984e3d"></script>
+  <script defer src="./scene.js?v=92152dc3f94b"></script>
+  <script type="module" src="./room.mjs?v=9f60475db7e6"></script>
 </head>
 <body class="viewer">
 <div id="radarPage" class="show">
@@ -28,6 +28,18 @@
     <canvas id="scene-decorations" aria-hidden="true"></canvas>
     <div id="scene-markers" aria-hidden="true"></div>
     <button type="button" id="scene-fit" disabled>全图</button>
+    <div id="scene-camera-movement" hidden>
+      <div class="scene-camera-direction" role="group" aria-label="移动">
+        <button type="button" data-camera-move="forward" aria-label="前进">↑</button>
+        <button type="button" data-camera-move="left" aria-label="向左移动">←</button>
+        <button type="button" data-camera-move="back" aria-label="后退">↓</button>
+        <button type="button" data-camera-move="right" aria-label="向右移动">→</button>
+      </div>
+      <div class="scene-camera-height" role="group" aria-label="高度">
+        <button type="button" data-camera-move="up">上升</button>
+        <button type="button" data-camera-move="down">下降</button>
+      </div>
+    </div>
     <div class="scene-feedback"><div id="scene-status" role="status" hidden></div><button type="button" id="scene-retry" hidden>重试</button></div>
   </section>
   <div id="tile-status" role="status" hidden>底图暂时无法加载</div>
@@ -35,7 +47,11 @@
 <aside id="sideMenu" role="region" aria-label="雷达设置" aria-hidden="true" inert>
   <header class="panel-head"><div class="panel-brand"><svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4v8l5 5M4 12h3M12 17v3"/><circle cx="9" cy="10" r="1"/></svg></div><div class="panel-heading"><h2>雷达设置</h2></div><button type="button" class="panel-close" aria-label="关闭雷达设置"><svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg></button></header>
   <div class="map-card"><div class="map-card-top"><label for="mapSel"><svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Zm6-2v16m6-14v16"/></svg>当前地图</label><span class="map-count">6 张地图</span></div><div class="map-select-wrap"><select class="menu-select" id="mapSel"><option value="0">零号大坝</option><option value="1">长弓溪谷</option><option value="2">航天基地</option><option value="3">巴克什</option><option value="4">潮汐监狱</option><option value="5">AZ3</option></select><svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></div></div>
-  <div class="map-card view-card">
+  <div class="map-card view-card" id="scene-camera-controls" hidden>
+    <div class="map-card-top"><label for="scene-camera-mode">3D 视角</label></div>
+    <div class="map-select-wrap"><select class="menu-select" id="scene-camera-mode"><option value="third">第三人称 · 环绕</option><option value="first">第一人称 · 跟随视线</option><option value="free">自由视角</option></select><svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></div>
+  </div>
+  <div class="map-card view-card" id="follow-view-controls">
     <div class="map-card-top"><label for="scene-mode">地图模式</label></div>
     <div class="map-select-wrap"><select class="menu-select" id="scene-mode" disabled><option value="2d">2D 地图</option><option value="3d">3D 地图</option></select><svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></div>
   </div>

@@ -18,6 +18,7 @@ export function projectEnemy(index,x,y,origin) {
 }
 const defaultDisplay={sAR:true,sH:true,sHP:true,sTN:true};
 const tierColors=['#fff','#fff','#00ff00','#64ffff','#ff64ff','#ffff64','#ff0000'];
+const teammateEyeOffsetCm=80;
 // Project a UE yaw through the same calibrated axes as a position. Leaflet
 // screen Y increases downwards, including on the two rotated maps.
 export function facingAngle(index,yaw) {
@@ -87,12 +88,20 @@ function openRoom() {
   const count=document.getElementById('viewers'), feed=document.getElementById('status'), dot=document.getElementById('dot');
   const select=document.getElementById('mapSel'), tileStatus=document.getElementById('tile-status');
   const viewSelect=document.getElementById('viewSel');
+  const cameraSelect=document.getElementById('scene-camera-mode');
+  const cameraControls=document.getElementById('scene-camera-controls');
+  const followControls=document.getElementById('follow-view-controls');
+  const sceneView=document.getElementById('scene-view'), sceneCanvas=document.getElementById('scene-canvas');
+  const touchCamera=document.getElementById('scene-camera-movement');
+  const touchInput=matchMedia('(any-pointer: coarse)');
   const menu=document.getElementById('sideMenu'), menuButton=document.getElementById('menuBtn');
   const closeButton=menu.querySelector('.panel-close'), display={...defaultDisplay,s3Avatar:true,s3Box:false,s3Ray:false,s3Distance:true};
   function showMenu(open) {
     menu.classList.toggle('open',open);menuButton.classList.toggle('open',open);
     menu.inert=!open;menu.setAttribute('aria-hidden',String(!open));menuButton.setAttribute('aria-expanded',String(open));
-    (open?closeButton:menuButton).focus();
+    touchCamera.inert=open;
+    const returnFocus=cameraSelect.value==='free'&&sceneView.classList.contains('ready')?sceneCanvas:menuButton;
+    (open?closeButton:returnFocus).focus();
   }
   menuButton.addEventListener('click',()=>showMenu(true));
   closeButton.addEventListener('click',()=>showMenu(false));
@@ -109,7 +118,10 @@ function openRoom() {
   const viewName=slot=>slot===0?'自己':'队友 '+slot;
   function updateViews() {
     const views=(frame?.v||[]).slice().sort((a,b)=>a[1]-b[1]);
-    const list=[['free','自由看图'],...views.map(v=>[String(v[0]),viewName(v[1])])];
+    const three=scene?.active;
+    const list=three&&cameraSelect.value==='first'?[]:[['free',three?'全图':'自由看图']];
+    if(three&&!views.some(v=>v[0]===0))list.push(['0','自己 · 暂无位置']);
+    list.push(...views.map(v=>[String(v[0]),viewName(v[1])]));
     if(selected!=='free' && !list.some(([key])=>key===selected))
       list.push([selected,selectedLabel+' · 暂无位置']);
     const signature=JSON.stringify(list);
@@ -137,6 +149,13 @@ function openRoom() {
   });
   map.on('dragstart',()=>{selected='free';selectedLabel='';updateViews();scheduleDraw();});
   const viewLocation=v=>({id:v[0],x:v[2],y:v[3],z:v[5]});
+  function cameraTarget(v) {
+    const yaw=v[4],pitch=v[6];
+    const hasYaw=Number.isFinite(yaw),hasPitch=Number.isFinite(pitch);
+    // The local sample is at eye height. Squad positions come from their capsule centers.
+    return {...viewLocation(v),view:{yaw:hasYaw?yaw:0,pitch:hasPitch?pitch:0,
+      eyeOffset:v[1]===0?0:teammateEyeOffsetCm,manual:!hasYaw||!hasPitch}};
+  }
   function redrawScene() {
     const markers=[];
     const focus=selectedView();
@@ -155,7 +174,7 @@ function openRoom() {
       markers.push({...viewLocation(v),kind:v[1]===0?'self':'ally',label:viewName(v[1]),
         model:display.s3Avatar,standing:true,yaw:v[4],tint:[.17,.74,.51]});
     }
-    scene.update(frame?(frame.o??[]):null,markers,focus?viewLocation(focus):null);
+    scene.update(frame?(frame.o??[]):null,markers,focus?cameraTarget(focus):null);
   }
   function redraw() {
     dirty=false;
@@ -190,6 +209,69 @@ function openRoom() {
     }
   }
   function scheduleDraw() {if (!dirty) {dirty=true;requestAnimationFrame(redraw);}}
+  const directions=new Map([
+    ['forward',[0,1,0]],['back',[0,-1,0]],['left',[-1,0,0]],['right',[1,0,0]],
+    ['up',[0,0,1]],['down',[0,0,-1]]
+  ]);
+  const heldDirections=new Map();
+  let cameraTimer=0;
+  function stopCameraMovement() {
+    clearInterval(cameraTimer);cameraTimer=0;heldDirections.clear();
+  }
+  function moveCamera() {
+    let right=0,forward=0,up=0;
+    for(const move of heldDirections.values()){right+=move[0];forward+=move[1];up+=move[2];}
+    scene?.moveFreeCamera(Math.sign(right),Math.sign(forward),Math.sign(up));
+  }
+  function syncCameraControls() {
+    const three=scene?.active, free=three&&cameraSelect.value==='free';
+    cameraControls.hidden=!three;
+    followControls.hidden=free;
+    touchCamera.hidden=!free||!touchInput.matches;
+    if(touchCamera.hidden)stopCameraMovement();
+    let gesture='拖动平移 · 滚轮或双指缩放';
+    if(three) {
+      if(free)gesture=touchInput.matches?'单指旋转 · 双指平移或捏合':
+        '点击地图后用 WASD 移动，Q 下降，E 上升';
+      else gesture=(cameraSelect.value==='first'?'拖动调整视角':'拖动旋转')+' · 滚轮或双指缩放';
+      sceneCanvas.setAttribute('aria-label',gesture);
+    }
+    document.getElementById('radar-gesture').textContent=gesture;
+  }
+  function selectFirstPersonTarget() {
+    if(cameraSelect.value==='first'&&selected==='free'){
+      selected='0';selectedLabel=viewName(0);
+    }
+  }
+  touchCamera.addEventListener('pointerdown',event=>{
+    const button=event.target.closest('button[data-camera-move]');
+    const move=directions.get(button?.dataset.cameraMove);
+    if(touchCamera.hidden||!move||event.button!==0)return;
+    event.preventDefault();
+    button.setPointerCapture(event.pointerId);
+    heldDirections.set(event.pointerId,move);moveCamera();
+    if(!cameraTimer)cameraTimer=setInterval(moveCamera,80);
+  });
+  for(const name of ['pointerup','pointercancel','lostpointercapture'])touchCamera.addEventListener(name,event=>{
+    heldDirections.delete(event.pointerId);
+    if(!heldDirections.size)stopCameraMovement();
+  });
+  touchCamera.addEventListener('click',event=>{
+    // Keyboard and assistive technology can activate a button without pressing it.
+    if(touchCamera.hidden||event.detail!==0)return;
+    const move=directions.get(event.target.closest('button[data-camera-move]')?.dataset.cameraMove);
+    if(move)scene?.moveFreeCamera(...move);
+  });
+  addEventListener('blur',stopCameraMovement);
+  addEventListener('pagehide',stopCameraMovement);
+  menuButton.addEventListener('click',stopCameraMovement);
+  touchInput.addEventListener('change',syncCameraControls);
+  cameraSelect.addEventListener('change',()=>{
+    selectFirstPersonTarget();
+    scene?.setPerspective(cameraSelect.value);
+    syncCameraControls();updateViews();scheduleDraw();
+    if(cameraSelect.value==='free')showMenu(false);
+  });
   for (const button of menu.querySelectorAll('[data-setting]')) {
     const key=button.dataset.setting;
     button.addEventListener('click',()=>{
@@ -215,17 +297,22 @@ function openRoom() {
     onModeChange(three){
       document.getElementById('scene-entities').hidden=!three;
       document.getElementById('health-display-label').textContent=three?'血条':'血量圆环';
-      document.getElementById('radar-gesture').textContent=(three?'拖动旋转':'拖动平移')+' · 滚轮或双指缩放';
       tileStatus.hidden=three||!tileFailed;
-      if(!three){loadTiles();map.invalidateSize({animate:false});follow();}
+      if(three)selectFirstPersonTarget();
+      else {loadTiles();map.invalidateSize({animate:false});follow();}
+      syncCameraControls();updateViews();
       scheduleDraw();
     },
-    onFit(){selected='free';selectedLabel='';updateViews();scheduleDraw();},redraw:scheduleDraw
+    onFit(){
+      cameraSelect.value='third';
+      selected='free';selectedLabel='';syncCameraControls();updateViews();scheduleDraw();
+    },redraw:scheduleDraw
   });
   scene?.setPosesEnabled(display.s3Avatar);
   function setMap(){
     const next=Number(select.value);
     if(!Number.isInteger(next)||!maps[next])return;
+    stopCameraMovement();
     index=next;scene?.setMap(index);
     if(!scene?.active){loadTiles();follow();}
     scheduleDraw();

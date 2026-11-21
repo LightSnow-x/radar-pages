@@ -265,7 +265,7 @@ SOFTWARE.
     if(!initialize()){onError('3D 渲染器初始化失败，请使用 2D 地图。');return null;}
     avatarRenderer=globalThis.UamRadarAvatar?.create(gl);
     let scene=null,target=null,items=[],visible=false,lost=false,pending=0,azimuth=-Math.PI/2,elevation=.55,distance=28,overview=false,autoFit=true;
-    let perspective='third',lookYaw=0,lookPitch=0,firstFov=75;
+    let perspective='third',lookYaw=0,lookPitch=0,firstFov=75,freeFocus=null;
     function surfaceStatus(load){if(surfaceLoad!==load)return;const total=load.wanted.size;
       onSurfaceStatus('官方贴图 '+load.loaded+' / '+total+(load.failed.size?' · '+load.failed.size+' 项暂不可用':'')+(load.unsupported?' · '+load.unsupported+' 个材质暂不支持':''));}
     function pause(signal,delay){return new Promise((resolve,reject)=>{const abort=()=>{clearTimeout(timer);reject(new Error('cancelled'));};const timer=setTimeout(()=>{signal.removeEventListener('abort',abort);resolve();},delay);signal.addEventListener('abort',abort,{once:true});if(signal.aborted)abort();});}
@@ -305,12 +305,21 @@ SOFTWARE.
     function radius(){return scene?Math.max(1,Math.hypot(...scene.maximum.map((v,i)=>(v-scene.minimum[i])*.005))):100;}
     function limitDistance(value){return Math.max(3,Math.min(Math.max(300,radius()*8),value));}
     function focusAndDistance(width,height) {
+      if(perspective==='free'&&freeFocus)return {focus:freeFocus,distance};
       const whole=overview||!target;
-      const center=scene.minimum.map((v,i)=>(v*.5+scene.maximum[i]*.5-scene.origin[i])*.01);
+      const minimum=scene.focusMinimum||scene.minimum,maximum=scene.focusMaximum||scene.maximum;
+      const center=minimum.map((v,i)=>(v*.5+maximum[i]*.5-scene.origin[i])*.01);
       const focus=whole?center:[(target.x-scene.origin[0])*.01,(target.y-scene.origin[1])*.01,
         finite(target.z)?(target.z-scene.origin[2])*.01:center[2]];
-      const fitDistance=radius()/Math.sin(Math.atan(Math.tan(Math.PI/6)*Math.min(1,width/height)))*1.1;
-      return {focus,distance:whole&&autoFit?Math.max(8,fitDistance):distance};
+      const fitRadius=Math.max(1,Math.hypot(...maximum.map((v,i)=>(v-minimum[i])*.005)));
+      const fitDistance=fitRadius/Math.sin(Math.atan(Math.tan(Math.PI/6)*Math.min(1,width/height)))*1.1;
+      const viewDistance=whole&&autoFit?Math.max(8,fitDistance):distance;
+      if(perspective==='free'){
+        freeFocus=focus;
+        distance=viewDistance;
+        autoFit=false;
+      }
+      return {focus,distance:viewDistance};
     }
     const pointers=new Map();let pinch=0;
     function draw() {
@@ -377,20 +386,61 @@ SOFTWARE.
     }
     function schedule(){if(visible&&!lost&&!pending)pending=requestAnimationFrame(draw);}
     function zoom(factor){if(perspective==='first'){firstFov=Math.max(35,Math.min(110,firstFov*factor));schedule();return;}const rect=canvas.getBoundingClientRect();if(scene)distance=focusAndDistance(Math.max(1,rect.width),Math.max(1,rect.height)).distance;distance=limitDistance(distance*factor);autoFit=false;schedule();}
+    function moveFree(right,forward,up=0){
+      if(!freeFocus)return;
+      freeFocus[0]+=Math.sin(azimuth)*right-Math.cos(azimuth)*forward;
+      freeFocus[1]-=Math.cos(azimuth)*right+Math.sin(azimuth)*forward;
+      freeFocus[2]+=up;
+    }
+    function moveFreeCamera(right,forward,up){
+      if(!scene||perspective!=='free')return;
+      if(!freeFocus){
+        const rect=canvas.getBoundingClientRect();
+        focusAndDistance(Math.max(1,rect.width),Math.max(1,rect.height));
+      }
+      const step=Math.max(1,distance*.08);
+      moveFree(right*step,forward*step,up*step);
+      schedule();
+    }
+    function panFree(dx,dy){
+      if(!scene)return;
+      const rect=canvas.getBoundingClientRect(),height=Math.max(1,rect.height);
+      const view=focusAndDistance(Math.max(1,rect.width),height);
+      const scale=2*view.distance*Math.tan(Math.PI/6)/height;
+      moveFree(-dx*scale,dy*scale);
+    }
     const handlers=[];
     function listen(name,callback,options){canvas.addEventListener(name,callback,options);handlers.push([name,callback,options]);}
     listen('pointerdown',event=>{pointers.set(event.pointerId,{x:event.clientX,y:event.clientY});canvas.setPointerCapture(event.pointerId);pinch=0;});
     listen('pointermove',event=>{
       const old=pointers.get(event.pointerId);if(!old)return;
       pointers.set(event.pointerId,{x:event.clientX,y:event.clientY});
-      if(pointers.size===1){if(perspective==='first'){lookYaw+=(event.clientX-old.x)*.2;lookPitch=Math.max(-89,Math.min(89,lookPitch-(event.clientY-old.y)*.15));}
-        else {azimuth+=(event.clientX-old.x)*.008;elevation=Math.max(.12,Math.min(1.52,elevation+(event.clientY-old.y)*.006));}}
-      else {const [a,b]=[...pointers.values()],next=Math.hypot(a.x-b.x,a.y-b.y);if(pinch>0&&next>0)zoom(pinch/next);pinch=next;}
+      const dx=event.clientX-old.x,dy=event.clientY-old.y;
+      if(pointers.size===1){
+        if(perspective==='first'){
+          lookYaw+=dx*.2;lookPitch=Math.max(-89,Math.min(89,lookPitch-dy*.15));
+        }else if(perspective==='free'&&event.shiftKey){
+          panFree(dx,dy);
+        }else{
+          azimuth+=dx*.008;elevation=Math.max(.12,Math.min(1.52,elevation+dy*.006));
+        }
+      }else{
+        const [a,b]=[...pointers.values()],next=Math.hypot(a.x-b.x,a.y-b.y);
+        if(perspective==='free'&&pointers.size===2)panFree(dx*.5,dy*.5);
+        if(pinch>0&&next>0)zoom(pinch/next);
+        pinch=next;
+      }
       schedule();
     });
     for(const name of ['pointerup','pointercancel','lostpointercapture'])listen(name,event=>{pointers.delete(event.pointerId);pinch=0;});
     listen('wheel',event=>{event.preventDefault();zoom(Math.exp(Math.max(-100,Math.min(100,event.deltaY))*.003));},{passive:false});
     listen('keydown',event=>{
+      const key=event.key.toLowerCase();
+      if(perspective==='free'&&['w','a','s','d','q','e'].includes(key)){
+        event.preventDefault();
+        moveFreeCamera(key==='d'?1:key==='a'?-1:0,key==='w'?1:key==='s'?-1:0,key==='e'?1:key==='q'?-1:0);
+        return;
+      }
       if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','-','='].includes(event.key))return;event.preventDefault();
       if(perspective==='first') {
         if(event.key==='ArrowLeft')lookYaw-=4;if(event.key==='ArrowRight')lookYaw+=4;
@@ -401,7 +451,7 @@ SOFTWARE.
       if(event.key==='ArrowUp')elevation=Math.min(1.52,elevation+.08);if(event.key==='ArrowDown')elevation=Math.max(.12,elevation-.08);
       if(event.key==='+'||event.key==='=')zoom(.85);if(event.key==='-')zoom(1/.85);schedule();
     });
-    listen('webglcontextlost',event=>{event.preventDefault();lost=true;clearTimeout(avatarExpiry);surfaceLoad?.abort();surfaceLoad=null;materials=[];textures.clear();whiteTexture=null;avatarRenderer=null;chunks.length=0;scene=null;overlay.replaceChildren();items=[];onError('3D 图形上下文已丢失，等待恢复…');});
+    listen('webglcontextlost',event=>{event.preventDefault();lost=true;clearTimeout(avatarExpiry);surfaceLoad?.abort();surfaceLoad=null;materials=[];textures.clear();whiteTexture=null;avatarRenderer=null;chunks.length=0;scene=null;freeFocus=null;overlay.replaceChildren();items=[];onError('3D 图形上下文已丢失，等待恢复…');});
     listen('webglcontextrestored',()=>{
       lost=false;program=null;
       if(!initialize()){lost=true;onError('3D 图形恢复失败，请切回 2D 后重试。');return;}
@@ -424,8 +474,17 @@ SOFTWARE.
         chunks.push({groups});loadSurfaces(value);if(surfaceLoad?.ready){registerTextures(surfaceLoad,groups);queueTextures(surfaceLoad);}schedule();return true;
       },
       setAvatar(model){if(lost||!avatarRenderer?.setModel(model))return false;avatarModel=model;schedule();return true;},
-      setPerspective(value){if(!['first','third'].includes(value))return;perspective=value;lookYaw=lookPitch=0;firstFov=75;overview=false;schedule();},
-      clear(){clearTimeout(avatarExpiry);scene=null;items=[];overlay.replaceChildren();if(!lost)clearBuffers();else chunks.length=0;schedule();},
+      moveFreeCamera,
+      setPerspective(value){
+        if(!['first','third','free'].includes(value))return;
+        if(value==='free'&&perspective!=='free'&&scene){
+          const rect=canvas.getBoundingClientRect();
+          const view=focusAndDistance(Math.max(1,rect.width),Math.max(1,rect.height));
+          freeFocus=view.focus;distance=view.distance;autoFit=false;
+        }else if(value!=='free')freeFocus=null;
+        perspective=value;lookYaw=lookPitch=0;firstFov=75;overview=false;schedule();
+      },
+      clear(){clearTimeout(avatarExpiry);scene=null;freeFocus=null;items=[];overlay.replaceChildren();if(!lost)clearBuffers();else chunks.length=0;schedule();},
       update(point,markers){
         clearTimeout(avatarExpiry);target=point;items=markers;overlay.replaceChildren(...items.map(item=>item.node));
         const expire=()=>{schedule();const now=performance.now(),next=Math.min(...items.map(i=>Math.max(i.avatar?.expiresAt||0,i.boundsExpiresAt||0)).filter(t=>t>now));
@@ -433,8 +492,8 @@ SOFTWARE.
         expire();
       },
       setVisible(value){visible=value;if(!value&&pending){cancelAnimationFrame(pending);pending=0;}if(value&&surfaceLoad)queueTextures(surfaceLoad);schedule();},
-      fit(){perspective='third';overview=true;autoFit=true;azimuth=-Math.PI/2;elevation=1.15;distance=85;schedule();},
-      follow(){overview=false;autoFit=true;lookYaw=lookPitch=0;firstFov=75;azimuth=-Math.PI/2;elevation=.55;distance=28;schedule();},resize:schedule,
+      fit(){perspective='third';freeFocus=null;overview=true;autoFit=true;azimuth=-Math.PI/2;elevation=1.15;distance=85;schedule();},
+      follow(){if(perspective==='free')return;overview=false;autoFit=true;lookYaw=lookPitch=0;firstFov=75;azimuth=-Math.PI/2;elevation=.55;distance=28;schedule();},resize:schedule,
       dispose(){visible=false;clearTimeout(avatarExpiry);if(pending)cancelAnimationFrame(pending);for(const args of handlers)canvas.removeEventListener(...args);overlay.replaceChildren();release();}
     };
   }
@@ -1117,6 +1176,7 @@ SOFTWARE.
     const avatarStatus = byId('scene-avatar-status');
     const avatarRetry = byId('scene-avatar-retry');
     let active = false, index = 0, renderer = null, pending = null, bounds = null, following = null;
+    let perspective = 'third';
     let posesEnabled = false, avatarReady = false, avatarAsset = null, avatarRequest = null;
     const standingPoses = new Map();
 
@@ -1210,6 +1270,7 @@ SOFTWARE.
         fit.disabled = false;
         view.classList.add('ready');
         renderer.fit();
+        if (perspective !== 'third') renderer.setPerspective(perspective);
         renderer.setVisible(true);
         message('');
         redraw();
@@ -1259,7 +1320,11 @@ SOFTWARE.
     mode.addEventListener('change', setMode);
     retry.addEventListener('click', () => { if (active) void load(); });
     avatarRetry?.addEventListener('click', () => { void loadAvatar(); });
-    fit.addEventListener('click', () => { onFit(); renderer?.fit(); });
+    fit.addEventListener('click', () => {
+      perspective = 'third';
+      onFit();
+      renderer?.fit();
+    });
     addEventListener('resize', () => renderer?.resize());
     addEventListener('pagehide', () => {
       reset();cancelAvatar();renderer?.dispose();renderer=null;avatarReady=false;
@@ -1271,6 +1336,20 @@ SOFTWARE.
 
     return {
       get active() { return active; },
+      setPerspective(next) {
+        if (next === perspective || !['first', 'third', 'free'].includes(next)) return;
+        perspective = next;
+        if (!bounds) return;
+        if (next === 'third' && following === null) {
+          renderer.fit();
+        } else {
+          renderer.setPerspective(next);
+          if (next !== 'free') renderer.follow();
+        }
+      },
+      moveFreeCamera(right, forward, up) {
+        if (bounds) renderer.moveFreeCamera(right, forward, up);
+      },
       setMap(next) {
         if (index === next) return;
         index = next;
@@ -1296,17 +1375,28 @@ SOFTWARE.
           const posedBounds = pose ? globalThis.UamRadarAvatar.bounds(avatarAsset, pose) : null;
           const standing = useAvatars && marker.model && marker.standing ? standingModel(marker) : null;
           const body = posedBounds || standing?.bounds || (marker.player ? playerMarkerBounds : null);
-          items.push({...point, ...markerNode(marker), avatar: marker.model ? (pose || standing?.pose) : null,
+          items.push({id: marker.id, ...point, ...markerNode(marker), avatar: marker.model ? (pose || standing?.pose) : null,
             bounds: body, boundsExpiresAt: posedBounds ? pose.expiresAt : Infinity, card: !!body,
             box: !!body && marker.box, ray: marker.ray, tint: marker.tint, lineColor: marker.color});
         }
-        message(origin && !positioned ? '等待带高度和世界原点的雷达数据' : '');
         const target = positioned ? absolutePosition(origin, focus) : null;
-        const key = target ? focus.id : null;
+        if (target) {
+          target.id = focus.id;
+          if (focus.view) {
+            const {eyeOffset, yaw, pitch, manual} = focus.view;
+            target.view = {x: target.x, y: target.y, z: target.z + eyeOffset, yaw, pitch, manual};
+          }
+        }
+        let notice = '';
+        if (origin && !positioned) notice = '等待带高度和世界原点的雷达数据';
+        else if (perspective === 'first' && !target?.view) notice = '等待所选目标的实时视角…';
+        else if (perspective === 'first' && target.view.manual) notice = '视角数据不完整，可拖动调整。';
+        message(notice);
+        const key = target?.id ?? null;
         if (key !== following) {
           following = key;
           if (target) renderer.follow();
-          else renderer.fit();
+          else if (perspective === 'third') renderer.fit();
         }
         renderer.update(target, items);
         return items.length;

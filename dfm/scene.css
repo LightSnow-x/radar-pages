@@ -12,6 +12,16 @@
 #scene-fit {position:absolute;top:16px;left:16px}
 #scene-fit:disabled {opacity:.55;cursor:default}
 .scene-feedback {position:absolute;bottom:max(16px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;width:max-content;max-width:calc(100% - 24px)}
+#scene-camera-movement {position:absolute;bottom:max(12px,env(safe-area-inset-bottom));left:max(12px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));display:flex;align-items:end;justify-content:space-between;pointer-events:none}
+#scene-camera-movement[hidden],#scene-view:not(.ready) #scene-camera-movement {display:none}
+#scene-camera-movement:not([hidden]) ~ .scene-feedback {bottom:calc(max(12px,env(safe-area-inset-bottom)) + 106px)}
+.scene-camera-direction,.scene-camera-height {display:grid;gap:6px}
+.scene-camera-direction {grid-template-columns:repeat(3,44px)}
+.scene-camera-direction [data-camera-move="forward"] {grid-column:2}
+.scene-camera-direction [data-camera-move="left"] {grid-column:1}
+#scene-camera-movement button {min-width:44px;min-height:44px;padding:0 8px;border:1px solid #88b6a180;border-radius:10px;background:#101e1be6;color:#e7f0eb;font:inherit;font-weight:650;touch-action:none;user-select:none;pointer-events:auto;cursor:pointer}
+#scene-camera-movement button:active {background:#285446}
+#scene-camera-movement button:focus-visible {outline:2px solid #00e79a;outline-offset:2px}
 #scene-status {padding:8px 12px;border:1px solid #88b6a155;border-radius:10px;background:#101e1b;color:#e7f0eb;font-size:12px}
 #scene-status.error {color:#f8ccb0}
 .scene-marker {--marker-color:#f66b62;position:absolute;top:0;left:0;font:650 13px/1.15 'Segoe UI','Microsoft YaHei',system-ui,sans-serif;text-align:center;color:#fff;text-shadow:-1px -1px 0 #111,1px -1px 0 #111,-1px 1px 0 #111,1px 1px 0 #111,0 1px 3px #000}
