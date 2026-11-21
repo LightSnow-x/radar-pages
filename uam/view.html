@@ -8,17 +8,17 @@
   <link rel="stylesheet" href="../connection.css">
   <script defer src="../transport.js" data-game="uam" data-endpoint="ws://103.236.84.5:19558/radar-ws"></script>
   <link rel="stylesheet" href="vendor/leaflet.css">
-  <link rel="stylesheet" href="radar.css?v=public-3d">
+  <link rel="stylesheet" href="radar.css?v=touch-camera">
   <script defer src="vendor/leaflet.js"></script>
   <script defer src="projection.js"></script>
   <script defer src="annotations.js"></script>
-  <script defer src="radar-3d.js?v=12819bd34914"></script>
+  <script defer src="radar-3d.js?v=0dff09230076"></script>
   <script defer src="radar-avatar.js"></script>
   <script defer src="vendor/fflate-0.8.3.js"></script>
   <script defer src="map-pack.js?v=browser-maps"></script>
   <script defer src="avatar-pack.js"></script>
   <script defer src="model-pack.js?v=b69f23496ab8"></script>
-  <script defer src="radar.js?v=observation-camera"></script>
+  <script defer src="radar.js?v=touch-camera"></script>
 </head>
 <body>
   <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
@@ -41,6 +41,18 @@
     <canvas id="sceneDecorations" aria-hidden="true"></canvas>
     <div id="sceneMarkers" aria-label="3D 实时目标"></div>
     <p class="scene-help">拖动旋转 · 滚轮 / 双指缩放</p>
+    <div id="freeCameraTouch" class="free-camera-touch" hidden>
+      <div class="free-camera-direction" role="group" aria-label="移动观察位置">
+        <button type="button" data-camera-move="forward" aria-label="前进">↑</button>
+        <button type="button" data-camera-move="left" aria-label="向左移动">←</button>
+        <button type="button" data-camera-move="back" aria-label="后退">↓</button>
+        <button type="button" data-camera-move="right" aria-label="向右移动">→</button>
+      </div>
+      <div class="free-camera-height" role="group" aria-label="相机高度">
+        <button type="button" data-camera-move="up">上升</button>
+        <button type="button" data-camera-move="down">下降</button>
+      </div>
+    </div>
   </section>
   <header class="topbar">
     <div class="brand"><strong class="game-wordmark">暗区突围</strong><span id="modeBadge" class="mode-label">局域网</span></div>

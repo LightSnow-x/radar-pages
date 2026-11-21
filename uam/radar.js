@@ -21,6 +21,10 @@
   const publicModelPack=globalThis.UamRadarModelPack;
   const avatarLabel=publicModelPack?'奶娃模型':'奶龙模型';
   const standingPoses=new Map();
+  const touchCamera=byId('freeCameraTouch');
+  const touchCameraMedia=touchCamera?globalThis.matchMedia?.('(pointer: coarse), (max-width: 600px)'):null;
+  const touchCameraMoves=new Map();
+  let touchCameraTimer=0;
   byId('viewControls').hidden=Boolean(room&&!publicModelPack);
   const resourceUrl=path=>room?path+'?room='+room+(atlasRevision?'&rev='+atlasRevision:''):path;
   const images=new Map(),markers=new Map();
@@ -737,6 +741,27 @@
     }
     return standingPoses.get(key);
   }
+  function stopTouchCamera() {
+    clearInterval(touchCameraTimer);
+    touchCameraTimer=0;
+    touchCameraMoves.clear();
+  }
+  function stepTouchCamera() {
+    let right=0,forward=0,up=0;
+    for(const move of touchCameraMoves.values()){
+      right+=move[0];forward+=move[1];up+=move[2];
+    }
+    sceneRenderer?.moveFreeCamera(Math.sign(right),Math.sign(forward),Math.sign(up));
+  }
+  function syncTouchCamera() {
+    if(!touchCamera)return;
+    const visible=is3d()&&byId('cameraMode').value==='free'&&!!touchCameraMedia?.matches;
+    if(touchCamera.hidden!==!visible){
+      touchCamera.hidden=!visible;
+      byId('sceneView').classList.toggle('free-camera-active',visible);
+    }
+    if(!visible&&touchCameraTimer)stopTouchCamera();
+  }
   function renderScene(load=true) {
     if(!sceneRenderer)return;
     const context=sceneContext(),items=[];
@@ -772,12 +797,15 @@
     sceneRenderer.update(context?.point||null,items);
     const cameraMode=byId('cameraMode').value,cameraStatus=byId('cameraStatus');
     let cameraMessage='';
-    if(cameraMode==='free')cameraMessage='点击地图后用 WASD 移动、Q/E 升降。Shift 加拖动或双指拖动可平移。';
+    if(cameraMode==='free')cameraMessage=touchCameraMedia?.matches?
+      '按住屏幕方向键移动、升降。单指旋转，双指平移或捏合缩放。':
+      '点击地图后用 WASD 移动、Q/E 升降。Shift 加拖动可平移。';
     else if(publicModelPack&&context?.waitingHeight)cameraMessage='等待带高度的雷达数据…';
     else if(cameraMode==='first'&&!context?.point?.view)cameraMessage='等待所选目标的实时视角…';
     else if(cameraMode==='first'&&context.point.view.manual)cameraMessage='拖动可调整当前视角。';
     cameraStatus.hidden=!is3d()||!cameraMessage;
     if(cameraStatus.textContent!==cameraMessage)cameraStatus.textContent=cameraMessage;
+    syncTouchCamera();
     byId('avatarStatus').hidden=!is3d();
     byId('retryAvatar').hidden=!is3d()||!byId('showAvatars').checked||!!avatarAsset||avatarBusy||!avatarMessage;
     byId('avatarStatus').textContent=!byId('showAvatars').checked?avatarLabel+'已隐藏':avatarMessage||
@@ -795,6 +823,7 @@
       }
     }
     viewMode=value;byId('viewMode').value=value;byId('map').hidden=value!=='2d';byId('sceneView').hidden=value==='2d';
+    syncTouchCamera();
     byId('avatarControl').hidden=value==='2d';byId('avatarStatus').hidden=value==='2d';byId('retryAvatar').hidden=true;
     byId('targets2d').hidden=value!=='2d';byId('targets3d').hidden=value==='2d';
     byId('cameraControls').hidden=value==='2d';byId('cameraStatus').hidden=true;
@@ -913,13 +942,46 @@
     fit();
   });
   byId('cameraMode').value='third';
-  byId('cameraMode').addEventListener('change',event=>{sceneRenderer?.setPerspective(event.target.value);updateFollow();renderScene(false);});
+  byId('cameraMode').addEventListener('change',event=>{
+    const mode=event.target.value;
+    sceneRenderer?.setPerspective(mode);
+    if(mode==='free'&&touchCameraMedia?.matches)setPanel(false);
+    updateFollow();renderScene(false);
+  });
   byId('followScene').addEventListener('click',()=>{
     if(byId('cameraMode').value==='free'){
       byId('cameraMode').value='third';sceneRenderer?.setPerspective('third');
     }
     sceneRenderer?.follow();renderMarkers();
   });
+  if(touchCamera){
+    const directions=new Map([
+      ['left',[-1,0,0]],['right',[1,0,0]],['forward',[0,1,0]],['back',[0,-1,0]],
+      ['up',[0,0,1]],['down',[0,0,-1]],
+    ]);
+    touchCamera.addEventListener('pointerdown',event=>{
+      const button=event.target.closest('button[data-camera-move]');
+      const move=directions.get(button?.dataset.cameraMove);
+      if(touchCamera.hidden||!move)return;
+      event.preventDefault();
+      button.setPointerCapture(event.pointerId);
+      touchCameraMoves.set(event.pointerId,move);
+      stepTouchCamera();
+      if(!touchCameraTimer)touchCameraTimer=setInterval(stepTouchCamera,80);
+    });
+    for(const name of ['pointerup','pointercancel','lostpointercapture'])touchCamera.addEventListener(name,event=>{
+      touchCameraMoves.delete(event.pointerId);
+      if(!touchCameraMoves.size)stopTouchCamera();
+    });
+    touchCamera.addEventListener('click',event=>{
+      // Keyboard and assistive-technology activation do not emit pointer events.
+      if(touchCamera.hidden||event.detail!==0)return;
+      const button=event.target.closest('button[data-camera-move]');
+      const move=directions.get(button?.dataset.cameraMove);
+      if(move)sceneRenderer?.moveFreeCamera(...move);
+    });
+    addEventListener('blur',stopTouchCamera);
+  }
   byId('viewMode').addEventListener('change',event=>setViewMode(event.target.value));
   byId('followSelect').addEventListener('change',event=>{
     const id=event.target.value;if(id!=='self'&&!teammates().some(e=>e.i===id))return;
@@ -966,8 +1028,9 @@
   }
   selectPanelTab('map');
   let sceneTimer=setInterval(()=>{if(is3d())void refreshScene();},250);
-  addEventListener('resize',()=>{fit();sceneRenderer?.resize();});
+  addEventListener('resize',()=>{syncTouchCamera();fit();sceneRenderer?.resize();});
   addEventListener('pagehide',()=>{
+    stopTouchCamera();
     mapPackRequest?.controller.abort();mapPackRequest=null;
     setViewerCount(null);stream?.close();clearInterval(connectionTimer);clearTimeout(catalogRetry);clearInterval(sceneTimer);invalidateScene();sceneRenderer?.setVisible(false);
   });

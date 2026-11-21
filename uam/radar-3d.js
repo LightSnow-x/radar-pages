@@ -234,6 +234,16 @@
       freeFocus[1]-=Math.cos(azimuth)*right+Math.sin(azimuth)*forward;
       freeFocus[2]+=up;
     }
+    function moveFreeCamera(right,forward,up){
+      if(!scene||perspective!=='free')return;
+      if(!freeFocus){
+        const rect=canvas.getBoundingClientRect();
+        focusAndDistance(Math.max(1,rect.width),Math.max(1,rect.height));
+      }
+      const step=Math.max(1,distance*.08);
+      moveFree(right*step,forward*step,up*step);
+      schedule();
+    }
     function panFree(dx,dy){
       if(!scene)return;
       const rect=canvas.getBoundingClientRect(),height=Math.max(1,rect.height);
@@ -270,9 +280,8 @@
       const key=event.key.toLowerCase();
       if(perspective==='free'&&['w','a','s','d','q','e'].includes(key)){
         event.preventDefault();
-        const step=Math.max(1,distance*.08);
-        moveFree(key==='d'?step:key==='a'?-step:0,key==='w'?step:key==='s'?-step:0,key==='e'?step:key==='q'?-step:0);
-        schedule();return;
+        moveFreeCamera(key==='d'?1:key==='a'?-1:0,key==='w'?1:key==='s'?-1:0,key==='e'?1:key==='q'?-1:0);
+        return;
       }
       if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','-','='].includes(event.key))return;event.preventDefault();
       if(perspective==='first') {
@@ -307,6 +316,7 @@
         chunks.push({groups});loadSurfaces(value);if(surfaceLoad?.ready){registerTextures(surfaceLoad,groups);queueTextures(surfaceLoad);}schedule();return true;
       },
       setAvatar(model){if(lost||!avatarRenderer?.setModel(model))return false;avatarModel=model;schedule();return true;},
+      moveFreeCamera,
       setPerspective(value){
         if(!['first','third','free'].includes(value))return;
         if(value==='free'&&perspective!=='free'&&scene){
