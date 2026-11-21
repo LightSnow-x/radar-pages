@@ -6,7 +6,7 @@
   <meta name="referrer" content="no-referrer">
   <title>同行聊天室</title>
   <link rel="stylesheet" href="./room.css?v=20261120-chat-count">
-  <script defer src="./room-join.js?v=0b354d353729" data-endpoint="ws://103.236.84.5:19558/radar-ws"></script>
+  <script defer src="./room-join.js?v=c1507259fc6a" data-endpoint="ws://103.236.84.5:19558/radar-ws"></script>
 </head>
 <body data-game="uam" data-view="entry">
   <header class="site-header">
@@ -17,7 +17,7 @@
   <main class="chat-shell">
     <section id="access-panel" aria-labelledby="access-title">
       <h1 id="access-title" tabindex="-1">同行聊天室</h1>
-      <p class="access-hint">选择游戏，输入自己 Worker 弹窗上的同行房号。</p>
+      <p class="access-hint">选择游戏与区服，输入 Worker 右上角显示的四位房号。</p>
       <form id="join-room">
         <label for="game">游戏与区服</label>
         <select id="game" name="game">
@@ -26,7 +26,7 @@
           <option value="dfm/cn">三角洲行动</option>
         </select>
         <label for="room">同行房间号</label>
-        <input id="room" name="room" inputmode="numeric" enterkeyhint="go" pattern="(0[1-9][0-9]{11}|[1-9][0-9]{0,19})" maxlength="20" autocomplete="off" spellcheck="false" placeholder="输入同行房号" required>
+        <input id="room" name="room" inputmode="numeric" enterkeyhint="go" pattern="[0-9]{4}" maxlength="4" autocomplete="off" spellcheck="false" placeholder="输入四位房号" required>
         <button id="join" class="primary-button" type="submit">进入聊天室</button>
         <p id="chat-status" class="status-note" role="status"></p>
       </form>

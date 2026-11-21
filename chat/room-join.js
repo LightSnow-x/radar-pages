@@ -20,7 +20,8 @@
   const input = document.getElementById('message');
   const sendButton = document.getElementById('send');
   const sendStatus = document.getElementById('send-status');
-  const validRoom = /^(?:0[1-9][0-9]{11}|[1-9][0-9]{0,19})$/;
+  const shortRoom = /^[0-9]{4}$/;
+  const legacyMatch = /^[1-9][0-9]{0,19}$/;
   const individualRoom = /^0([1-9][0-9]{11})$/;
   const confirmationTimeout = 8000;
   let channel;
@@ -100,15 +101,20 @@
     case 'ready':
       clearTimeout(state.joinDeadline);
       if (message.status !== 200) {
-        disconnect(message.status === 401 ? '房间号已失效或与游戏、区服不符，请核对 Worker 弹窗。' :
+        disconnect(message.status === 401 ? '个人入口已失效，请填写本局四位房号。' :
           message.status === 404 ? '当前房间没有可聊天的同局同行，请核对游戏和房号。' : '聊天室暂时无法连接，请重试。');
+        return;
+      }
+      if (state.short && state.short !== message.roomCode) {
+        disconnect('房间号与本局信息不符，请重新输入。');
         return;
       }
       if (state.code && (typeof message.sender !== 'string' || !message.sender)) {
         disconnect('暂时无法识别这个房间号，请稍后重试。');
         return;
       }
-      roomGame.textContent = /^\d{4}$/.test(message.roomCode) ? `${state.gameLabel} · 房间 ${message.roomCode}` : state.gameLabel;
+      state.automatic = shortRoom.test(message.roomCode);
+      roomGame.textContent = state.automatic ? `${state.gameLabel} · 房间 ${message.roomCode}` : state.gameLabel;
       roomMember.textContent = message.sender || '访客';
       roomCount.textContent = '人数统计中';
       accessPanel.hidden = true;
@@ -119,7 +125,7 @@
       break;
     case 'chat-count':
       if (!conversation.hidden && Number.isSafeInteger(message.count) && message.count >= 0) {
-        roomCount.textContent = `${message.count} 人在线`;
+        roomCount.textContent = state.automatic ? `${message.count} 位同行在线` : `${message.count} 人在线`;
       }
       break;
     case 'chat':
@@ -150,11 +156,11 @@
     }
   }
 
-  function join() {
-    if (channel || !game.value || !validRoom.test(room.value)) return;
-    const code = individualRoom.exec(room.value)?.[1];
-    const route = game.value + '/' + (code ? 'join' : room.value);
-    const key = game.value + '/' + room.value;
+  function join({ code, match } = {}) {
+    const short = code || match ? undefined : room.value.trim();
+    if (channel || !game.value || (!code && !match && !shortRoom.test(short))) return;
+    const route = game.value + '/' + (code ? 'join' : match || 'room/' + short);
+    const key = game.value + '/' + (code || match || short);
     let socket;
     try {
       const url = new URL(endpoint);
@@ -166,7 +172,7 @@
     }
     if (draftRoom !== key) input.value = '';
     draftRoom = key;
-    const state = { socket, code, gameLabel: game.selectedOptions[0].textContent };
+    const state = { socket, code, short, gameLabel: game.selectedOptions[0].textContent };
     channel = state;
     lockJoin(true);
     joinStatus.textContent = '正在匹配当前对局…';
@@ -215,13 +221,16 @@
 
   const invite = new URLSearchParams(location.hash.slice(1));
   const invitedGame = invite.get('game') + '/' + invite.get('region');
-  const legacyNumber = '0' + (invite.get('member') || '');
-  const invitedRoom = individualRoom.test(legacyNumber) ? legacyNumber : invite.get('room') || '';
-  if (Array.from(game.options).some(option => option.value === invitedGame) && validRoom.test(invitedRoom)) {
+  const invitedRoom = invite.get('room') || '';
+  const invitedCode = individualRoom.exec('0' + (invite.get('member') || ''))?.[1] || individualRoom.exec(invitedRoom)?.[1];
+  if (Array.from(game.options).some(option => option.value === invitedGame)) {
     game.value = invitedGame;
-    room.value = invitedRoom;
     updateTheme();
-    join();
+    if (invitedCode) join({ code: invitedCode });
+    else if (shortRoom.test(invitedRoom)) {
+      room.value = invitedRoom;
+      join();
+    } else if (legacyMatch.test(invitedRoom)) join({ match: invitedRoom });
   }
 })();
 
