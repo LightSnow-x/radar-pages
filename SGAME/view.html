@@ -7,9 +7,9 @@
   <meta name="referrer" content="no-referrer">
   <title>峡谷雷达 · 实时战场</title>
   <link rel="icon" type="image/png" href="./branding/game-icon.png">
-  <link rel="stylesheet" href="./viewer.css?v=b8db8964874b">
+  <link rel="stylesheet" href="./viewer.css?v=7cc7909f135e">
   <script defer src="../transport.js?v=cebbfdc810eb" data-game="sgame" data-endpoint="wss://xiaoxue.aaocc.cn:19560/radar-ws"></script>
-  <script type="module" src="./radar.js?v=b8db8964874b"></script>
+  <script type="module" src="./radar.js?v=7cc7909f135e"></script>
 </head>
 <body class="viewer-page" data-mode="web">
   <a class="skip-link" href="#map-surface">跳到战场地图</a>
@@ -24,7 +24,7 @@
     <section class="map-arena" aria-label="实时战场地图">
       <div id="map-surface" class="map-surface" tabindex="0">
         <img id="map-image" class="map-image" width="702" height="702" alt="王者峡谷地图" hidden>
-        <canvas id="markers" role="img" aria-label="英雄、兵线、野区和防御塔的实时位置" hidden></canvas>
+        <canvas id="markers" role="img" aria-label="地图上的英雄、兵线、野区和建筑标记" hidden></canvas>
         <div class="map-message" id="map-message"><div class="waiting-emblem" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="m24 4 20 20-20 20L4 24Z"/><path d="m24 13 11 11-11 11-11-11Z"/><path d="M24 4v9m20 11H35M24 44v-9M4 24h9"/></svg></div><p id="map-message-title">正在连接房间</p><p id="map-message-detail">连接成功后自动同步对局。</p><button id="reconnect" class="accent-button" type="button" hidden>重新连接</button></div>
       </div>
     </section>
@@ -62,13 +62,13 @@
         <label><span class="layer-symbol neutral"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V7m0 7L6 9 3 3l7 3 2 4m0 8 7-6 2-7-7 4-2 5"/></svg></span><span class="layer-caption">野区营地<small>野怪位置与刷新倒计时</small></span><input type="checkbox" name="monsters" checked aria-label="显示野区营地"><i class="toggle-track" aria-hidden="true"></i></label>
         <label><span class="layer-symbol tower"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3v6l3 3-1 9m12-18v6l-3 3 1 9M5 5h4V2h6v3h4M4 21h16M9 9h6"/></svg></span><span class="layer-caption">防御塔与水晶<small id="structure-status">等待防御塔数据</small></span><input type="checkbox" name="structures" checked disabled aria-label="显示防御塔与水晶" aria-describedby="structure-status"><i class="toggle-track" aria-hidden="true"></i></label>
         <label><span class="layer-symbol own"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg></span><span class="layer-caption">英雄头像<small>关闭头像可减少图片流量</small></span><input type="checkbox" name="portraits" checked aria-label="显示英雄头像"><i class="toggle-track" aria-hidden="true"></i></label>
-        <label><span class="layer-symbol health"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM8 12h8m-4-4v8"/></svg></span><span class="layer-caption">建筑血量<small>在建筑下方显示生命条</small></span><input type="checkbox" name="structureHealth" checked aria-label="显示建筑血量"><i class="toggle-track" aria-hidden="true"></i></label>
+        <label class="lan-only"><span class="layer-symbol health"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM8 12h8m-4-4v8"/></svg></span><span class="layer-caption">建筑血量<small>在建筑下方显示生命条</small></span><input type="checkbox" name="structureHealth" checked aria-label="显示建筑血量"><i class="toggle-track" aria-hidden="true"></i></label>
       </fieldset>
       <p class="menu-footnote">显示偏好会保存在当前浏览器。</p>
     </section>
     <section id="intel-panel" role="tabpanel" aria-labelledby="intel-tab" hidden>
       <dl class="battle-stats"><div><dt>可见敌方</dt><dd id="hero-count">—</dd></div><div><dt>野区目标</dt><dd id="camp-count">—</dd></div><div><dt>刷新中</dt><dd id="respawn-count">—</dd></div></dl>
-      <section class="structure-summary" aria-label="防御塔状态"><h3>防御塔存活</h3><div class="tower-score"><span class="own">我方 <b id="own-towers">—</b></span><span class="score-divider">/</span><span class="enemy">敌方 <b id="enemy-towers">—</b></span></div><p id="tower-note" class="section-hint">等待防御塔数据</p></section>
+      <section class="structure-summary lan-only" aria-label="防御塔状态"><h3>防御塔存活</h3><div class="tower-score"><span class="own">我方 <b id="own-towers">—</b></span><span class="score-divider">/</span><span class="enemy">敌方 <b id="enemy-towers">—</b></span></div><p id="tower-note" class="section-hint">等待防御塔数据</p></section>
       <section class="timers-section" aria-label="野区刷新计时"><h3>野区刷新<span>即将回归战场</span></h3><div id="respawn-list" class="respawn-list"><p class="intel-empty">进入对局后显示营地刷新时间</p></div></section>
     </section>
     <footer class="menu-footer"><span class="web-only">网页雷达</span><span class="lan-only">局域网雷达</span><span>LIGHTSNOW</span></footer>

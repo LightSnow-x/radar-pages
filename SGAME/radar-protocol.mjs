@@ -1,6 +1,27 @@
 const coordinateLimit = 10000;
 const eventLimit = 32 * 1024;
 const kinds = new Set(['frame', 'viewers', 'ended', 'ping']);
+export const pvp9MapId = 'pvp_9';
+
+// Fixed building locations on the pvp_9 image. These are normalized browser
+// coordinates, checked against both LAN and web captures of this map.
+// Rows contain camp, kind, x and y. Only live LAN rows have a health field.
+const pvp9Structures = [
+  [1, 1, 248, 3057], [1, 1, 312, 5654], [1, 1, 418, 7538],
+  [1, 1, 1827, 8173], [1, 1, 2462, 9582], [1, 1, 3169, 7077],
+  [1, 1, 3913, 5827], [1, 1, 4743, 9569], [1, 1, 7385, 9617],
+  [1, 2, 899, 9101],
+  [2, 1, 3057, 248], [2, 1, 5257, 431], [2, 1, 6087, 4173],
+  [2, 1, 6831, 2923], [2, 1, 7532, 422], [2, 1, 8173, 1827],
+  [2, 1, 9583, 2462], [2, 1, 9617, 7385], [2, 1, 9688, 4346],
+  [2, 2, 9101, 899],
+];
+
+export function structureMarkers(frame, web) {
+  if (!frame?.ready) return null;
+  if (!web) return frame.t ?? null;
+  return frame.map === pvp9MapId ? pvp9Structures : null;
+}
 
 const integer = (value, min, max) => Number.isSafeInteger(value) && value >= min && value <= max;
 const coordinate = value => integer(value, 0, coordinateLimit);

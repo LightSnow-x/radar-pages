@@ -1,4 +1,4 @@
-import { abilityIconUrl, abilityState, heroPortraitUrls, mapPoint, parseRadarFrame, readRadarEvents } from './radar-protocol.mjs?v=b8db8964874b';
+import { abilityIconUrl, abilityState, heroPortraitUrls, mapPoint, parseRadarFrame, pvp9MapId, readRadarEvents, structureMarkers } from './radar-protocol.mjs?v=7cc7909f135e';
 
 const element = id => document.getElementById(id);
 const room = new URLSearchParams(location.search).get('room') || '';
@@ -23,7 +23,6 @@ const structureStatus = element('structure-status');
 const lanesStatus = element('lanes-status');
 const enemyCards = new Map();
 let enemyOrder = '';
-const atlasName = 'pvp_9';
 const staleAfter = 4200;
 const monsterIcons = new Map([
   [266010, 'Icon_XiaoGuai_1'],
@@ -62,12 +61,14 @@ function renderIntel(current) {
   setText(element('hero-count'), current ? String(current.h.length) : '—');
   setText(element('camp-count'), current ? String(current.m.filter(row => row[3] === 0).length) : '—');
   setText(element('respawn-count'), current ? String(cooling.length) : '—');
-  const towers = current?.t;
-  const alive = team => towers.filter(row => row[0] === team && row[1] === 1 && row[4] > 0).length;
-  setText(element('own-towers'), towers ? String(alive(current.camp)) : '—');
-  setText(element('enemy-towers'), towers ? String(alive(3 - current.camp)) : '—');
-  const destroyed = towers?.filter(row => row[1] === 1 && row[4] === 0).length || 0;
-  setText(element('tower-note'), towers ? (destroyed ? destroyed + ' 座防御塔已摧毁' : '建筑状态随对局同步') : '等待防御塔数据');
+  if (!web) {
+    const towers = current?.t;
+    const alive = team => towers.filter(row => row[0] === team && row[1] === 1 && row[4] > 0).length;
+    setText(element('own-towers'), towers ? String(alive(current.camp)) : '—');
+    setText(element('enemy-towers'), towers ? String(alive(3 - current.camp)) : '—');
+    const destroyed = towers?.filter(row => row[1] === 1 && row[4] === 0).length || 0;
+    setText(element('tower-note'), towers ? (destroyed ? destroyed + ' 座防御塔已摧毁' : '建筑状态随对局同步') : '等待防御塔数据');
+  }
   const shown = cooling.slice(0, 5);
   const signature = current ? JSON.stringify(shown) : 'waiting';
   if (signature === intelSignature) return;
@@ -209,6 +210,16 @@ function showMessage(title, detail, canRetry = false) {
   mapMessage.hidden = false;
 }
 
+function updateStructureLayer(current) {
+  const available = structureMarkers(current, web) !== null;
+  options.namedItem('structures').disabled = !available;
+  if (web) {
+    setText(structureStatus, available ? '地图固定点位' : current ? '当前地图暂无固定点位' : '识别战场后显示地图固定点位');
+  } else {
+    setText(structureStatus, available ? '双方建筑位置与摧毁状态' : '等待设备提供建筑数据');
+  }
+}
+
 function showNoFrame(state, label, title, detail, canRetry = false) {
   frame = null;
   renderIntel(null);
@@ -220,9 +231,7 @@ function showNoFrame(state, label, title, detail, canRetry = false) {
   setText(mapName, '等待对局');
   mapNote.hidden = true;
   rotate.disabled = true;
-  options.namedItem('structures').disabled = true;
-  structureStatus.hidden = false;
-  setText(structureStatus, '等待防御塔数据');
+  updateStructureLayer(null);
   mapImage.hidden = true;
   canvas.hidden = true;
   showMessage(title, detail, canRetry);
@@ -257,7 +266,7 @@ function loadMap() {
 
 function updateMap() {
   if (!frame) return;
-  const knownMap = frame.map === atlasName;
+  const knownMap = frame.map === pvp9MapId;
   setText(mapName, knownMap ? '王者峡谷' : '对局网格');
   if (knownMap) loadMap();
   mapImage.hidden = !knownMap || mapLoad !== 'ready';
@@ -344,14 +353,15 @@ function paintMonsters(size, marker, position) {
 }
 
 function paintStructures(marker, position) {
-  for (const [camp, kind, px, py, hp] of frame.t || []) {
+  for (const [camp, kind, px, py, hp] of structureMarkers(frame, web) ?? []) {
     const [x, y] = position(px, py);
     const file = 'NewStyle_JGS_' + (kind === 2 ? 'Base_' : 'Tower_') + (camp === 1 ? 'Bule' : 'Red') + '.png';
-    context.globalAlpha = hp > 0 ? 1 : .28;
+    context.globalAlpha = hp === 0 ? .28 : 1;
     if (!drawIcon(icon('./icons/towers_and_bases/' + file), x, y, marker * 1.6)) {
       diamond(x, y, marker * .48, colors[camp]);
     }
     context.globalAlpha = 1;
+    if (hp === undefined) continue;
     if (hp === 0) {
       context.beginPath();
       context.moveTo(x - marker * .3, y - marker * .3);
@@ -535,8 +545,7 @@ function handleEvent(active, type, data) {
   setText(element('data-label'), frame.demo ? '演示数据 · 非实时对局' : 'BATTLEFIELD');
   mapMessage.hidden = true;
   if (layers.dataset.camp !== String(frame.camp)) layers.dataset.camp = String(frame.camp);
-  options.namedItem('structures').disabled = frame.t == null;
-  setText(structureStatus, frame.t == null ? '等待设备提供建筑数据' : '双方建筑位置与摧毁状态');
+  updateStructureLayer(frame);
   updateMap();
 }
 
