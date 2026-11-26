@@ -1,4 +1,4 @@
-import { mapPoint, parseRadarFrame, readRadarEvents } from './radar-protocol.mjs?v=b4f321204727';
+import { mapPoint, parseRadarFrame, readRadarEvents } from './radar-protocol.mjs?v=a363257b6fd3';
 
 const element = id => document.getElementById(id);
 const room = new URLSearchParams(location.search).get('room') || '';
