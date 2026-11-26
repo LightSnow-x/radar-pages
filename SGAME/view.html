@@ -7,9 +7,9 @@
   <meta name="referrer" content="no-referrer">
   <title>峡谷雷达 · 实时战场</title>
   <link rel="icon" type="image/png" href="./branding/game-icon.png">
-  <link rel="stylesheet" href="./viewer.css?v=7cc7909f135e">
+  <link rel="stylesheet" href="./viewer.css?v=b679adc25f90">
   <script defer src="../transport.js?v=cebbfdc810eb" data-game="sgame" data-endpoint="wss://xiaoxue.aaocc.cn:19560/radar-ws"></script>
-  <script type="module" src="./radar.js?v=7cc7909f135e"></script>
+  <script type="module" src="./radar.js?v=b679adc25f90"></script>
 </head>
 <body class="viewer-page" data-mode="web">
   <a class="skip-link" href="#map-surface">跳到战场地图</a>
@@ -56,7 +56,7 @@
       </div></fieldset>
       <fieldset id="layer-options" class="layer-options"><legend class="sr-only">显示图层</legend>
         <label><span class="layer-symbol own"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg></span><span class="layer-caption">自身位置<small>定位当前操控的英雄</small></span><input type="checkbox" name="self" checked aria-label="显示自身位置"><i class="toggle-track" aria-hidden="true"></i></label>
-        <label><span class="layer-symbol enemy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 5v8l-8 5-8-5V8l8-5ZM8 10l2 2m6-2-2 2M9 16h6"/></svg></span><span class="layer-caption">敌方英雄<small>可见位置与生命值</small></span><input type="checkbox" name="heroes" checked aria-label="显示敌方英雄"><i class="toggle-track" aria-hidden="true"></i></label>
+        <label><span class="layer-symbol enemy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 5v8l-8 5-8-5V8l8-5ZM8 10l2 2m6-2-2 2M9 16h6"/></svg></span><span class="layer-caption">敌方英雄<small>淡色表示无视野或视野未知</small></span><input type="checkbox" name="heroes" checked aria-label="显示敌方英雄"><i class="toggle-track" aria-hidden="true"></i></label>
         <label><span class="layer-symbol enemy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 8 5-2 11-6 4-6-4L4 7l8-5Z"/><path d="M8 9h8m-4-3v9"/></svg></span><span class="layer-caption">敌方技能<small>大招、普通技能与召唤师</small></span><input type="checkbox" name="enemySkills" checked aria-label="显示敌方技能栏"><i class="toggle-track" aria-hidden="true"></i></label>
         <label><span class="layer-symbol own"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 3 4 4-4 4-4-4 4-4Zm10 10 4 4-4 4-4-4 4-4ZM3 17h7m4-10h7"/></svg></span><span class="layer-caption">双方兵线<small id="lanes-status">等待兵线数据</small></span><input type="checkbox" name="lanes" checked disabled aria-label="显示双方兵线"><i class="toggle-track" aria-hidden="true"></i></label>
         <label><span class="layer-symbol neutral"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V7m0 7L6 9 3 3l7 3 2 4m0 8 7-6 2-7-7 4-2 5"/></svg></span><span class="layer-caption">野区营地<small>野怪位置与刷新倒计时</small></span><input type="checkbox" name="monsters" checked aria-label="显示野区营地"><i class="toggle-track" aria-hidden="true"></i></label>
@@ -67,7 +67,7 @@
       <p class="menu-footnote">显示偏好会保存在当前浏览器。</p>
     </section>
     <section id="intel-panel" role="tabpanel" aria-labelledby="intel-tab" hidden>
-      <dl class="battle-stats"><div><dt>可见敌方</dt><dd id="hero-count">—</dd></div><div><dt>野区目标</dt><dd id="camp-count">—</dd></div><div><dt>刷新中</dt><dd id="respawn-count">—</dd></div></dl>
+      <dl class="battle-stats"><div><dt>地图敌方</dt><dd id="hero-count">—</dd></div><div><dt>野区目标</dt><dd id="camp-count">—</dd></div><div><dt>刷新中</dt><dd id="respawn-count">—</dd></div></dl>
       <section class="structure-summary lan-only" aria-label="防御塔状态"><h3>防御塔存活</h3><div class="tower-score"><span class="own">我方 <b id="own-towers">—</b></span><span class="score-divider">/</span><span class="enemy">敌方 <b id="enemy-towers">—</b></span></div><p id="tower-note" class="section-hint">等待防御塔数据</p></section>
       <section class="timers-section" aria-label="野区刷新计时"><h3>野区刷新<span>即将回归战场</span></h3><div id="respawn-list" class="respawn-list"><p class="intel-empty">进入对局后显示营地刷新时间</p></div></section>
     </section>
