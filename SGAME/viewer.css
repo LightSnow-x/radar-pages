@@ -213,7 +213,7 @@ h1{font-size:16px}
 .health-preview.horizontal::after{content:"";position:absolute;width:27px;height:5px;top:27px;left:-2px;border:1px solid #f8d5d6b0;border-radius:3px;background:linear-gradient(90deg,#fe4f4f 70%,#692324 70%);box-shadow:0 0 0 1px #250c0ee0}
 
 /* Enemy cooldowns sit outside the map so the battlefield stays readable. */
-.battlefield{display:grid;grid-template-columns:minmax(0,1fr) 300px;align-items:center;justify-content:initial;gap:24px;width:min(1180px,100%);margin-inline:auto;--map-size:min(calc(100vw - 430px),calc(100dvh - 260px),760px)}
+.battlefield{display:grid;grid-template-columns:minmax(0,1fr) 300px;align-items:center;justify-content:initial;gap:24px;width:min(1180px,100%);margin-inline:auto;--map-size:min(calc(100vw - 430px),calc(100dvh - 300px),760px)}
 .map-column{display:flex;flex-direction:column;align-items:center;min-width:0;position:relative}
 .enemy-panel{min-width:0;width:100%;max-height:min(580px,100%);overflow:auto;scrollbar-width:thin;scrollbar-color:#39515a transparent;padding:16px;background:#0d1a22cc;border:1px solid #71918c26;border-radius:14px}
 .enemy-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
@@ -245,7 +245,7 @@ h1{font-size:16px}
 .ability-cell[data-state="unknown"] .ability-value,.ability-cell[data-state="unlearned"] .ability-value{color:#b8c1c7}
 .enemy-secondary .ability-icon{width:21px;height:24px;border-radius:4px}
 .enemy-secondary .ability-label{display:none}
-body[data-enemy-panel="false"] .battlefield{grid-template-columns:minmax(0,1fr);--map-size:min(calc(100vw - 64px),calc(100dvh - 260px),900px)}
+body[data-enemy-panel="false"] .battlefield{grid-template-columns:minmax(0,1fr);--map-size:min(calc(100vw - 64px),calc(100dvh - 300px),900px)}
 @media(orientation:portrait){
 .battlefield{display:flex;flex-direction:column;justify-content:center;gap:12px;padding:12px 12px 8px;width:100%;--map-size:min(calc(100vw - 24px),calc(100dvh - 450px),680px)}
 .map-column{width:100%}.enemy-panel{width:var(--map-size);max-width:100%;padding:0;border:0;background:none;border-radius:0;overflow:visible;flex:none;max-height:none}

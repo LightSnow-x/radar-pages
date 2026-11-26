@@ -1,4 +1,4 @@
-import { abilityIconUrl, abilityState, heroPortraitUrls, mapPoint, parseRadarFrame, readRadarEvents } from './radar-protocol.mjs?v=62c7ca76b8df';
+import { abilityIconUrl, abilityState, heroPortraitUrls, mapPoint, parseRadarFrame, readRadarEvents } from './radar-protocol.mjs?v=b8db8964874b';
 
 const element = id => document.getElementById(id);
 const room = new URLSearchParams(location.search).get('room') || '';
