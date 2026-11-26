@@ -16,7 +16,7 @@
     status.textContent = message;
   }
 
-  update(params.has('ended') ? '房间已关闭。可重新开启共享，或输入其他房间号。' : '');
+  update(params.has('ended') ? '�����ѹرա������¿�����������������������š�' : '');
 
   room.addEventListener('input', () => {
     room.value = room.value.replace(/[^0-9]/g, '').slice(0, 4);

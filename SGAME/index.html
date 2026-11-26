@@ -5,44 +5,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#111823">
   <meta name="referrer" content="no-referrer">
-  <meta name="description" content="输入四位房间号，进入王者荣耀峡谷雷达，查看英雄位置与野区动向。">
-  <title>峡谷雷达 · 王者荣耀</title>
+  <meta name="description" content="������λ����ţ�����������ҫϿ���״�鿴Ӣ��λ����Ұ������">
+  <title>Ͽ���״� �� ������ҫ</title>
   <link rel="icon" type="image/png" href="./branding/game-icon.png">
   <link rel="preload" as="image" href="./branding/hero.webp">
-  <link rel="stylesheet" href="./radar.css?v=e4348ee18ce8">
-  <script defer src="./entry.js?v=e4348ee18ce8"></script>
+  <link rel="stylesheet" href="./radar.css?v=b4f321204727">
+  <script defer src="./entry.js?v=b4f321204727"></script>
 </head>
 <body class="entry-page" data-mode="web">
-  <a class="skip-link" href="#room">跳到房间号</a>
+  <a class="skip-link" href="#room">���������</a>
   <div class="entry-art" aria-hidden="true"></div>
   <header class="site-header"><div class="header-inner wrap">
-    <a href="./" class="brand" aria-label="王者荣耀雷达首页"><img class="wordmark" src="./branding/wordmark.png" alt="王者荣耀" width="192" height="51"><span class="brand-product">峡谷雷达</span></a>
-    <nav class="header-nav" aria-label="雷达导航"><span class="nav-current">房间登录<small>ROOM ACCESS</small></span><a class="web-only" href="../">游戏大厅<small>GAME LOBBY</small></a><span class="lan-only">局域网连接<small>LOCAL NETWORK</small></span></nav>
+    <a href="./" class="brand" aria-label="������ҫ�״���ҳ"><img class="wordmark" src="./branding/wordmark.png" alt="������ҫ" width="192" height="51"><span class="brand-product">Ͽ���״�</span></a>
+    <nav class="header-nav" aria-label="�״ﵼ��"><span class="nav-current">�����¼<small>ROOM ACCESS</small></span><a class="web-only" href="../">��Ϸ����<small>GAME LOBBY</small></a><span class="lan-only">����������<small>LOCAL NETWORK</small></span></nav>
   </div></header>
   <main class="entry-layout wrap">
     <section class="hero" aria-labelledby="hero-title">
-      <p class="eyebrow"><span></span>王者荣耀 · 战场视野</p>
-      <h1 id="hero-title">纵览峡谷<span>掌握战局</span></h1>
-      <p class="hero-description">英雄位置，野区动向。<br>让每一步决策，看得更清楚。</p>
-      <ul class="feature-list" aria-label="雷达支持的信息">
-        <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg><span>英雄位置</span></li>
-        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V7m0 7L6 9 3 3l7 3 2 4m0 8 7-6 2-7-7 4-2 5"/></svg><span>野区动向</span></li>
-        <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M9 2h6m-3 0v3m0 3v5l3 2m4-9 2 2"/></svg><span>刷新计时</span></li>
+      <p class="eyebrow"><span></span>������ҫ �� ս����Ұ</p>
+      <h1 id="hero-title">����Ͽ��<span>����ս��</span></h1>
+      <p class="hero-description">Ӣ��λ�ã�Ұ������<br>��ÿһ�����ߣ����ø������</p>
+      <ul class="feature-list" aria-label="�״�֧�ֵ���Ϣ">
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg><span>Ӣ��λ��</span></li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V7m0 7L6 9 3 3l7 3 2 4m0 8 7-6 2-7-7 4-2 5"/></svg><span>Ұ������</span></li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M9 2h6m-3 0v3m0 3v5l3 2m4-9 2 2"/></svg><span>ˢ�¼�ʱ</span></li>
       </ul>
     </section>
     <section class="entry-panel" aria-labelledby="entry-title">
-      <div class="panel-heading"><img class="game-icon" src="./branding/game-icon.png" alt="" width="192" height="192"><div><p class="eyebrow">进入你的战场</p><h2 id="entry-title">登录雷达房间</h2></div></div>
-      <div class="connection-kind"><span class="web-only">网页雷达</span><span class="lan-only">局域网雷达</span><span>四位房间号连接</span></div>
+      <div class="panel-heading"><img class="game-icon" src="./branding/game-icon.png" alt="" width="192" height="192"><div><p class="eyebrow">�������ս��</p><h2 id="entry-title">��¼�״﷿��</h2></div></div>
+      <div class="connection-kind"><span class="web-only">��ҳ�״�</span><span class="lan-only">�������״�</span><span>��λ���������</span></div>
       <form id="join-form" action="./view.html" method="get">
-        <label for="room">房间号<span>ROOM CODE</span></label>
+        <label for="room">�����<span>ROOM CODE</span></label>
         <div class="room-input-wrap"><input id="room" name="room" type="text" inputmode="numeric" autocomplete="off" maxlength="4" pattern="[0-9]{4}" placeholder="0000" required spellcheck="false" aria-describedby="room-help room-status"><span class="input-corners" aria-hidden="true"></span></div>
-        <p id="room-help" class="entry-help"><span class="web-only">在手机端开启「网页雷达」，输入共享页显示的房间号。</span><span class="lan-only">连接同一 Wi-Fi 或热点，输入手机共享页显示的房间号。</span></p>
-        <button id="enter-room" class="primary-button" type="submit"><span>进入战场</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 7 4v5c0 5-7 9-7 9s-7-4-7-9V7l7-4Z"/><path d="m8 12 3 3 5-6"/></svg></button>
+        <p id="room-help" class="entry-help"><span class="web-only">���ֻ��˿�������ҳ�״�����빲��ҳ��ʾ�ķ���š�</span><span class="lan-only">����ͬһ Wi-Fi ���ȵ㣬�����ֻ�����ҳ��ʾ�ķ���š�</span></p>
+        <button id="enter-room" class="primary-button" type="submit"><span>����ս��</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 7 4v5c0 5-7 9-7 9s-7-4-7-9V7l7-4Z"/><path d="m8 12 3 3 5-6"/></svg></button>
         <p id="room-status" class="room-status" role="status"></p>
       </form>
-      <details class="join-guide"><summary>在哪里查看房间号？<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><p>打开手机端「雷达共享」，选择连接方式并开启共享。将页面上的四位数字填入这里，保持游戏和共享运行即可。</p></details>
+      <details class="join-guide"><summary>������鿴����ţ�<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><p>���ֻ��ˡ��״ﹲ������ѡ�����ӷ�ʽ��������������ҳ���ϵ���λ�����������������Ϸ�͹������м��ɡ�</p></details>
     </section>
   </main>
-  <footer class="entry-footer wrap"><span>LIGHTSNOW<span class="footer-divider"></span>峡谷战术视野</span><span>手机开启共享 · 浏览器查看战况</span></footer>
+  <footer class="entry-footer wrap"><span>LIGHTSNOW<span class="footer-divider"></span>Ͽ��ս����Ұ</span><span>�ֻ��������� �� ������鿴ս��</span></footer>
 </body>
 </html>

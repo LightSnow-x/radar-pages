@@ -1,4 +1,4 @@
-import { mapPoint, parseRadarFrame, readRadarEvents } from './radar-protocol.mjs?v=e4348ee18ce8';
+import { mapPoint, parseRadarFrame, readRadarEvents } from './radar-protocol.mjs?v=b4f321204727';
 
 const element = id => document.getElementById(id);
 const room = new URLSearchParams(location.search).get('room') || '';
@@ -37,8 +37,9 @@ let staleTimer = 0;
 let retryTimer = 0;
 let retryDelay = 1500;
 let intelSignature = '';
+let actionTimer = 0;
 
-element('room-number').textContent = roomValid ? room : '—';
+element('room-number').textContent = roomValid ? room : '��';
 if (roomValid) element('change-room').href = './?room=' + room;
 
 function setText(node, value) {
@@ -52,10 +53,16 @@ function setConnection(state, label) {
 
 function renderIntel(current) {
   const cooling = current ? current.m.filter(row => row[3] > 0).sort((a, b) => a[3] - b[3]) : [];
-  setText(element('hero-count'), current ? String(current.h.length) : '—');
-  setText(element('camp-count'), current ? String(current.m.filter(row => row[3] === 0).length) : '—');
-  setText(element('respawn-count'), current ? String(cooling.length) : '—');
-  const shown = cooling.slice(0, 3);
+  setText(element('hero-count'), current ? String(current.h.length) : '��');
+  setText(element('camp-count'), current ? String(current.m.filter(row => row[3] === 0).length) : '��');
+  setText(element('respawn-count'), current ? String(cooling.length) : '��');
+  const towers = current?.t;
+  const alive = team => towers.filter(row => row[0] === team && row[1] === 1 && row[4] > 0).length;
+  setText(element('own-towers'), towers ? String(alive(current.camp)) : '��');
+  setText(element('enemy-towers'), towers ? String(alive(3 - current.camp)) : '��');
+  const destroyed = towers?.filter(row => row[1] === 1 && row[4] === 0).length || 0;
+  setText(element('tower-note'), towers ? (destroyed ? destroyed + ' ���������Ѵݻ�' : '����״̬��Ծ�ͬ��') : '�ȴ�����������');
+  const shown = cooling.slice(0, 5);
   const signature = current ? JSON.stringify(shown) : 'waiting';
   if (signature === intelSignature) return;
   intelSignature = signature;
@@ -64,7 +71,7 @@ function renderIntel(current) {
   if (!shown.length) {
     const empty = document.createElement('p');
     empty.className = 'intel-empty';
-    empty.textContent = current ? '当前没有刷新中的营地' : '进入对局后显示营地刷新时间';
+    empty.textContent = current ? '��ǰû��ˢ���е�Ӫ��' : '����Ծֺ���ʾӪ��ˢ��ʱ��';
     list.append(empty);
     return;
   }
@@ -75,9 +82,9 @@ function renderIntel(current) {
     const art = document.createElement('img');
     art.src = './icons/monsters/' + (monsterIcons.get(kind) || 'Icon_XiaoGuai_2') + '.png';
     art.alt = '';
-    caption.append(art, document.createTextNode('野区营地'));
+    caption.append(art, document.createTextNode('Ұ��Ӫ��'));
     const time = document.createElement('strong');
-    time.textContent = seconds < 60 ? seconds + ' 秒' : Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
+    time.textContent = seconds < 60 ? seconds + ' ��' : Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
     row.append(caption, time);
     list.append(row);
   }
@@ -95,18 +102,19 @@ function showNoFrame(state, label, title, detail, canRetry = false) {
   renderIntel(null);
   clearTimeout(staleTimer);
   setConnection(state, label);
-  setText(mapName, '等待对局');
+  setText(mapName, '�ȴ��Ծ�');
   mapNote.hidden = true;
   rotate.disabled = true;
   options.namedItem('structures').disabled = true;
-  structureStatus.hidden = true;
+  structureStatus.hidden = false;
+  setText(structureStatus, '�ȴ�����������');
   mapImage.hidden = true;
   canvas.hidden = true;
   showMessage(title, detail, canRetry);
 }
 
 function showWaiting() {
-  showNoFrame('waiting', '已进房', '等待进入对局', '进入对局后自动显示实时位置。');
+  showNoFrame('waiting', '�ѽ���', '�ȴ�����Ծ�', '����Ծֺ��Զ���ʾʵʱλ�á�');
 }
 
 function clearLink() {
@@ -127,7 +135,7 @@ function requestDraw() {
 function loadMap() {
   if (mapLoad !== 'idle') return;
   mapLoad = 'loading';
-  mapImage.sizes = '(max-width: 47rem) calc(100vw - 4rem), min(43.875rem, max(25rem, calc(100svh - 20.5rem)))';
+  mapImage.sizes = '(orientation: portrait) calc(100vw - 24px), (max-height: 600px) calc(100vh - 68px), min(900px, calc(100vh - 260px))';
   mapImage.srcset = './maps/pvp_9_small.png 344w, ./maps/pvp_9_big.png 702w';
   mapImage.src = './maps/pvp_9_small.png';
 }
@@ -135,14 +143,14 @@ function loadMap() {
 function updateMap() {
   if (!frame) return;
   const knownMap = frame.map === atlasName;
-  setText(mapName, knownMap ? '王者峡谷' : '对局网格');
+  setText(mapName, knownMap ? '����Ͽ��' : '�Ծ�����');
   if (knownMap) loadMap();
   mapImage.hidden = !knownMap || mapLoad !== 'ready';
   mapNote.hidden = knownMap && mapLoad === 'ready' && Boolean(context);
-  if (!context) setText(mapNote, '当前浏览器不支持地图标记。');
-  else if (!knownMap) setText(mapNote, '当前地图暂无底图，实时位置显示在网格上。');
-  else if (mapLoad === 'error') setText(mapNote, '底图未能加载，实时位置显示在网格上。');
-  else setText(mapNote, '正在加载底图，实时位置已显示。');
+  if (!context) setText(mapNote, '��ǰ�������֧�ֵ�ͼ��ǡ�');
+  else if (!knownMap) setText(mapNote, '��ǰ��ͼ���޵�ͼ��ʵʱλ����ʾ�������ϡ�');
+  else if (mapLoad === 'error') setText(mapNote, '��ͼδ�ܼ��أ�ʵʱλ����ʾ�������ϡ�');
+  else setText(mapNote, '���ڼ��ص�ͼ��ʵʱλ������ʾ��');
   rotate.disabled = !context && mapImage.hidden;
   canvas.hidden = !context;
   requestDraw();
@@ -224,11 +232,28 @@ function paintStructures(marker, position) {
   for (const [camp, kind, px, py, hp] of frame.t || []) {
     const [x, y] = position(px, py);
     const file = 'NewStyle_JGS_' + (kind === 2 ? 'Base_' : 'Tower_') + (camp === 1 ? 'Bule' : 'Red') + '.png';
-    context.globalAlpha = hp > 0 ? 1 : .45;
+    context.globalAlpha = hp > 0 ? 1 : .28;
     if (!drawIcon(icon('./icons/towers_and_bases/' + file), x, y, marker * 1.6)) {
       diamond(x, y, marker * .48, colors[camp]);
     }
     context.globalAlpha = 1;
+    if (hp === 0) {
+      context.beginPath();
+      context.moveTo(x - marker * .3, y - marker * .3);
+      context.lineTo(x + marker * .3, y + marker * .3);
+      context.moveTo(x + marker * .3, y - marker * .3);
+      context.lineTo(x - marker * .3, y + marker * .3);
+      context.lineWidth = 1.8;
+      context.strokeStyle = '#a7b0b4';
+      context.stroke();
+    } else if (options.namedItem('structureHealth').checked) {
+      const width = marker * 1.15;
+      const top = y + marker * .65;
+      context.fillStyle = '#07131de6';
+      context.fillRect(x - width / 2 - 1, top - 1, width + 2, 5);
+      context.fillStyle = hp <= 25 ? '#f0ad6b' : colors[camp];
+      context.fillRect(x - width / 2, top, width * hp / 100, 3);
+    }
   }
 }
 
@@ -264,8 +289,8 @@ function draw() {
   const marker = Math.max(15, Math.min(size * .045, 29));
   const position = (x, y) => mapPoint(x, y, size, rotated);
 
-  if (options.namedItem('monsters').checked) paintMonsters(size, marker, position);
   if (options.namedItem('structures').checked) paintStructures(marker, position);
+  if (options.namedItem('monsters').checked) paintMonsters(size, marker, position);
   if (options.namedItem('heroes').checked) paintHeroes(size, marker, position);
   if (options.namedItem('self').checked && frame.s) {
     const [x, y] = position(...frame.s);
@@ -298,35 +323,35 @@ function handleEvent(active, type, data) {
   document.body.dataset.camp = String(frame.camp);
   clearTimeout(staleTimer);
   staleTimer = setTimeout(() => {
-    if (session === active) showNoFrame('waiting', '等待更新', '等待对局数据', '收到新数据后自动恢复。');
+    if (session === active) showNoFrame('waiting', '�ȴ�����', '�ȴ��Ծ�����', '�յ������ݺ��Զ��ָ���');
   }, staleAfter);
-  setConnection('live', '实时连接');
+  setConnection('live', 'ʵʱ����');
   mapMessage.hidden = true;
   if (layers.dataset.camp !== String(frame.camp)) layers.dataset.camp = String(frame.camp);
   options.namedItem('structures').disabled = frame.t == null;
-  structureStatus.hidden = frame.t != null;
+  setText(structureStatus, frame.t == null ? '�ȴ��豸�ṩ��������' : '˫������λ����ݻ�״̬');
   updateMap();
 }
 
 function refuse(status) {
   const details = {
-    400: ['房间号无效', '请输入四位房间号。'],
-    401: ['授权已失效', '请重新连接房间。'],
-    403: ['连接未获准', '请从当前雷达入口连接房间。'],
-    404: ['房间未开放', '检查四位房间号，并确认设备已开启共享。'],
-    429: ['请求过于频繁', '稍后再连接房间。'],
+    400: ['�������Ч', '��������λ����š�'],
+    401: ['��Ȩ��ʧЧ', '���������ӷ��䡣'],
+    403: ['����δ��׼', '��ӵ�ǰ�״�������ӷ��䡣'],
+    404: ['����δ����', '�����λ����ţ���ȷ���豸�ѿ���������'],
+    429: ['�������Ƶ��', '�Ժ������ӷ��䡣'],
   }[status];
   if (!details) return false;
   clearLink();
-  setText(viewers, '—');
+  setText(viewers, '��');
   showNoFrame('error', details[0], details[0], details[1], status !== 400);
   return true;
 }
 
 function waitingForRetry() {
-  setText(viewers, '—');
-  showNoFrame('error', '尝试重新连接', '房间连接中断',
-    web ? '确认手机端的网页雷达仍在运行。' : '确认两台设备在同一局域网，并保持手机端共享开启。');
+  setText(viewers, '��');
+  showNoFrame('error', '������������', '���������ж�',
+    web ? 'ȷ���ֻ��˵���ҳ�״��������С�' : 'ȷ����̨�豸��ͬһ���������������ֻ��˹���������');
 }
 
 async function connectLan(active) {
@@ -370,7 +395,7 @@ async function connectLan(active) {
 function connectWeb(active) {
   if (!pages?.Stream) {
     clearLink();
-    showNoFrame('error', '连接组件未加载', '连接组件未加载', '刷新页面后再进入房间。');
+    showNoFrame('error', '�������δ����', '�������δ����', 'ˢ��ҳ����ٽ��뷿�䡣');
     return;
   }
   const stream = new pages.Stream(pages.route + '/events');
@@ -390,26 +415,102 @@ function connectWeb(active) {
 function start() {
   if (session || !roomValid || document.hidden) return;
   session = {};
-  setText(viewers, '—');
-  showNoFrame('waiting', '正在连接', '正在连接房间', '连接成功后自动同步对局。');
+  setText(viewers, '��');
+  showNoFrame('waiting', '��������', '�������ӷ���', '���ӳɹ����Զ�ͬ���Ծ֡�');
   if (web) connectWeb(session);
   else void connectLan(session);
 }
 
 function suspend() {
   clearLink();
-  showNoFrame('waiting', '已暂停', '等待重新连接', '返回此页面后自动恢复。');
+  showNoFrame('waiting', '����ͣ', '�ȴ���������', '���ش�ҳ����Զ��ָ���');
 }
 
 rotate.addEventListener('click', () => {
   rotated = !rotated;
   surface.dataset.rotated = String(rotated);
   rotate.setAttribute('aria-pressed', String(rotated));
-  setText(element('view-direction'), rotated ? '旋转视角 · 180°' : '标准视角');
+  setText(element('view-direction'), rotated ? '��ת�ӽ� �� 180��' : '��׼�ӽ�');
   requestDraw();
 });
 reconnect.addEventListener('click', start);
-layers.addEventListener('change', requestDraw);
+function savePreferences() {
+  const saved = { rotated };
+  for (const input of layers.querySelectorAll('input')) saved[input.name] = input.checked;
+  try { localStorage.setItem('sgame-radar-view', JSON.stringify(saved)); } catch { /* Storage can be unavailable in private browsing. */ }
+}
+try {
+  const saved = JSON.parse(localStorage.getItem('sgame-radar-view') || 'null');
+  if (saved && typeof saved === 'object') {
+    for (const input of layers.querySelectorAll('input')) {
+      if (typeof saved[input.name] === 'boolean') input.checked = saved[input.name];
+    }
+    if (saved.rotated === true) {
+      rotated = true;
+      surface.dataset.rotated = 'true';
+      rotate.setAttribute('aria-pressed', 'true');
+      setText(element('view-direction'), '��ת�ӽ� �� 180��');
+    }
+  }
+} catch { /* Ignore incomplete preferences and retain usable defaults. */ }
+rotate.addEventListener('click', savePreferences);
+layers.addEventListener('change', () => { savePreferences(); requestDraw(); });
+
+const menu = element('radar-menu');
+const openMenu = element('open-menu');
+openMenu.addEventListener('click', () => {
+  menu.showModal();
+  openMenu.setAttribute('aria-expanded', 'true');
+});
+element('close-menu').addEventListener('click', () => menu.close());
+menu.addEventListener('close', () => {
+  openMenu.setAttribute('aria-expanded', 'false');
+  openMenu.focus({ preventScroll: true });
+});
+menu.addEventListener('click', event => {
+  const box = menu.getBoundingClientRect();
+  if (event.target === menu && (event.clientX < box.left || event.clientX > box.right ||
+      event.clientY < box.top || event.clientY > box.bottom)) menu.close();
+});
+const tabs = [...menu.querySelectorAll('[role="tab"]')];
+function selectTab(selected) {
+  for (const tab of tabs) {
+    const active = tab === selected;
+    tab.setAttribute('aria-selected', String(active));
+    tab.tabIndex = active ? 0 : -1;
+    element(tab.getAttribute('aria-controls')).hidden = !active;
+  }
+}
+for (const tab of tabs) {
+  tab.addEventListener('click', () => selectTab(tab));
+  tab.addEventListener('keydown', event => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    const next = event.key === 'Home' ? tabs[0] : event.key === 'End' ? tabs.at(-1) : tabs[1 - tabs.indexOf(tab)];
+    selectTab(next);
+    next.focus();
+  });
+}
+function notifyAction(message) {
+  clearTimeout(actionTimer);
+  const status = element('action-status');
+  setText(status, message);
+  status.hidden = false;
+  actionTimer = setTimeout(() => { status.hidden = true; }, 4000);
+}
+const fullscreen = element('fullscreen');
+fullscreen.addEventListener('click', async () => {
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+    else notifyAction('��ǰ�������֧��ȫ�����ɺ����鿴��ͼ��');
+  } catch { notifyAction('��ʱ�޷�����ȫ������ʹ���������ȫ�����ܡ�'); }
+});
+document.addEventListener('fullscreenchange', () => {
+  fullscreen.setAttribute('aria-pressed', String(Boolean(document.fullscreenElement)));
+  fullscreen.querySelector('span').textContent = document.fullscreenElement ? '�˳�' : 'ȫ��';
+  requestDraw();
+});
 if (window.ResizeObserver) new ResizeObserver(requestDraw).observe(surface);
 else addEventListener('resize', requestDraw);
 if (!roomValid) refuse(400);
