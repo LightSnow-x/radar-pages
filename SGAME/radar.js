@@ -39,7 +39,7 @@ let retryDelay = 1500;
 let intelSignature = '';
 let actionTimer = 0;
 
-element('room-number').textContent = roomValid ? room : '��';
+element('room-number').textContent = roomValid ? room : '—';
 if (roomValid) element('change-room').href = './?room=' + room;
 
 function setText(node, value) {
@@ -53,15 +53,15 @@ function setConnection(state, label) {
 
 function renderIntel(current) {
   const cooling = current ? current.m.filter(row => row[3] > 0).sort((a, b) => a[3] - b[3]) : [];
-  setText(element('hero-count'), current ? String(current.h.length) : '��');
-  setText(element('camp-count'), current ? String(current.m.filter(row => row[3] === 0).length) : '��');
-  setText(element('respawn-count'), current ? String(cooling.length) : '��');
+  setText(element('hero-count'), current ? String(current.h.length) : '—');
+  setText(element('camp-count'), current ? String(current.m.filter(row => row[3] === 0).length) : '—');
+  setText(element('respawn-count'), current ? String(cooling.length) : '—');
   const towers = current?.t;
   const alive = team => towers.filter(row => row[0] === team && row[1] === 1 && row[4] > 0).length;
-  setText(element('own-towers'), towers ? String(alive(current.camp)) : '��');
-  setText(element('enemy-towers'), towers ? String(alive(3 - current.camp)) : '��');
+  setText(element('own-towers'), towers ? String(alive(current.camp)) : '—');
+  setText(element('enemy-towers'), towers ? String(alive(3 - current.camp)) : '—');
   const destroyed = towers?.filter(row => row[1] === 1 && row[4] === 0).length || 0;
-  setText(element('tower-note'), towers ? (destroyed ? destroyed + ' ���������Ѵݻ�' : '����״̬��Ծ�ͬ��') : '�ȴ�����������');
+  setText(element('tower-note'), towers ? (destroyed ? destroyed + ' 座防御塔已摧毁' : '建筑状态随对局同步') : '等待防御塔数据');
   const shown = cooling.slice(0, 5);
   const signature = current ? JSON.stringify(shown) : 'waiting';
   if (signature === intelSignature) return;
@@ -71,7 +71,7 @@ function renderIntel(current) {
   if (!shown.length) {
     const empty = document.createElement('p');
     empty.className = 'intel-empty';
-    empty.textContent = current ? '��ǰû��ˢ���е�Ӫ��' : '����Ծֺ���ʾӪ��ˢ��ʱ��';
+    empty.textContent = current ? '当前没有刷新中的营地' : '进入对局后显示营地刷新时间';
     list.append(empty);
     return;
   }
@@ -82,9 +82,9 @@ function renderIntel(current) {
     const art = document.createElement('img');
     art.src = './icons/monsters/' + (monsterIcons.get(kind) || 'Icon_XiaoGuai_2') + '.png';
     art.alt = '';
-    caption.append(art, document.createTextNode('Ұ��Ӫ��'));
+    caption.append(art, document.createTextNode('野区营地'));
     const time = document.createElement('strong');
-    time.textContent = seconds < 60 ? seconds + ' ��' : Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
+    time.textContent = seconds < 60 ? seconds + ' 秒' : Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
     row.append(caption, time);
     list.append(row);
   }
@@ -102,19 +102,19 @@ function showNoFrame(state, label, title, detail, canRetry = false) {
   renderIntel(null);
   clearTimeout(staleTimer);
   setConnection(state, label);
-  setText(mapName, '�ȴ��Ծ�');
+  setText(mapName, '等待对局');
   mapNote.hidden = true;
   rotate.disabled = true;
   options.namedItem('structures').disabled = true;
   structureStatus.hidden = false;
-  setText(structureStatus, '�ȴ�����������');
+  setText(structureStatus, '等待防御塔数据');
   mapImage.hidden = true;
   canvas.hidden = true;
   showMessage(title, detail, canRetry);
 }
 
 function showWaiting() {
-  showNoFrame('waiting', '�ѽ���', '�ȴ�����Ծ�', '����Ծֺ��Զ���ʾʵʱλ�á�');
+  showNoFrame('waiting', '已进房', '等待进入对局', '进入对局后自动显示实时位置。');
 }
 
 function clearLink() {
@@ -143,14 +143,14 @@ function loadMap() {
 function updateMap() {
   if (!frame) return;
   const knownMap = frame.map === atlasName;
-  setText(mapName, knownMap ? '����Ͽ��' : '�Ծ�����');
+  setText(mapName, knownMap ? '王者峡谷' : '对局网格');
   if (knownMap) loadMap();
   mapImage.hidden = !knownMap || mapLoad !== 'ready';
   mapNote.hidden = knownMap && mapLoad === 'ready' && Boolean(context);
-  if (!context) setText(mapNote, '��ǰ�������֧�ֵ�ͼ��ǡ�');
-  else if (!knownMap) setText(mapNote, '��ǰ��ͼ���޵�ͼ��ʵʱλ����ʾ�������ϡ�');
-  else if (mapLoad === 'error') setText(mapNote, '��ͼδ�ܼ��أ�ʵʱλ����ʾ�������ϡ�');
-  else setText(mapNote, '���ڼ��ص�ͼ��ʵʱλ������ʾ��');
+  if (!context) setText(mapNote, '当前浏览器不支持地图标记。');
+  else if (!knownMap) setText(mapNote, '当前地图暂无底图，实时位置显示在网格上。');
+  else if (mapLoad === 'error') setText(mapNote, '底图未能加载，实时位置显示在网格上。');
+  else setText(mapNote, '正在加载底图，实时位置已显示。');
   rotate.disabled = !context && mapImage.hidden;
   canvas.hidden = !context;
   requestDraw();
@@ -323,35 +323,35 @@ function handleEvent(active, type, data) {
   document.body.dataset.camp = String(frame.camp);
   clearTimeout(staleTimer);
   staleTimer = setTimeout(() => {
-    if (session === active) showNoFrame('waiting', '�ȴ�����', '�ȴ��Ծ�����', '�յ������ݺ��Զ��ָ���');
+    if (session === active) showNoFrame('waiting', '等待更新', '等待对局数据', '收到新数据后自动恢复。');
   }, staleAfter);
-  setConnection('live', 'ʵʱ����');
+  setConnection('live', '实时连接');
   mapMessage.hidden = true;
   if (layers.dataset.camp !== String(frame.camp)) layers.dataset.camp = String(frame.camp);
   options.namedItem('structures').disabled = frame.t == null;
-  setText(structureStatus, frame.t == null ? '�ȴ��豸�ṩ��������' : '˫������λ����ݻ�״̬');
+  setText(structureStatus, frame.t == null ? '等待设备提供建筑数据' : '双方建筑位置与摧毁状态');
   updateMap();
 }
 
 function refuse(status) {
   const details = {
-    400: ['�������Ч', '��������λ����š�'],
-    401: ['��Ȩ��ʧЧ', '���������ӷ��䡣'],
-    403: ['����δ��׼', '��ӵ�ǰ�״�������ӷ��䡣'],
-    404: ['����δ����', '�����λ����ţ���ȷ���豸�ѿ���������'],
-    429: ['�������Ƶ��', '�Ժ������ӷ��䡣'],
+    400: ['房间号无效', '请输入四位房间号。'],
+    401: ['授权已失效', '请重新连接房间。'],
+    403: ['连接未获准', '请从当前雷达入口连接房间。'],
+    404: ['房间未开放', '检查四位房间号，并确认设备已开启共享。'],
+    429: ['请求过于频繁', '稍后再连接房间。'],
   }[status];
   if (!details) return false;
   clearLink();
-  setText(viewers, '��');
+  setText(viewers, '—');
   showNoFrame('error', details[0], details[0], details[1], status !== 400);
   return true;
 }
 
 function waitingForRetry() {
-  setText(viewers, '��');
-  showNoFrame('error', '������������', '���������ж�',
-    web ? 'ȷ���ֻ��˵���ҳ�״��������С�' : 'ȷ����̨�豸��ͬһ���������������ֻ��˹���������');
+  setText(viewers, '—');
+  showNoFrame('error', '尝试重新连接', '房间连接中断',
+    web ? '确认手机端的网页雷达仍在运行。' : '确认两台设备在同一局域网，并保持手机端共享开启。');
 }
 
 async function connectLan(active) {
@@ -395,7 +395,7 @@ async function connectLan(active) {
 function connectWeb(active) {
   if (!pages?.Stream) {
     clearLink();
-    showNoFrame('error', '�������δ����', '�������δ����', 'ˢ��ҳ����ٽ��뷿�䡣');
+    showNoFrame('error', '连接组件未加载', '连接组件未加载', '刷新页面后再进入房间。');
     return;
   }
   const stream = new pages.Stream(pages.route + '/events');
@@ -415,22 +415,22 @@ function connectWeb(active) {
 function start() {
   if (session || !roomValid || document.hidden) return;
   session = {};
-  setText(viewers, '��');
-  showNoFrame('waiting', '��������', '�������ӷ���', '���ӳɹ����Զ�ͬ���Ծ֡�');
+  setText(viewers, '—');
+  showNoFrame('waiting', '正在连接', '正在连接房间', '连接成功后自动同步对局。');
   if (web) connectWeb(session);
   else void connectLan(session);
 }
 
 function suspend() {
   clearLink();
-  showNoFrame('waiting', '����ͣ', '�ȴ���������', '���ش�ҳ����Զ��ָ���');
+  showNoFrame('waiting', '已暂停', '等待重新连接', '返回此页面后自动恢复。');
 }
 
 rotate.addEventListener('click', () => {
   rotated = !rotated;
   surface.dataset.rotated = String(rotated);
   rotate.setAttribute('aria-pressed', String(rotated));
-  setText(element('view-direction'), rotated ? '��ת�ӽ� �� 180��' : '��׼�ӽ�');
+  setText(element('view-direction'), rotated ? '旋转视角 · 180°' : '标准视角');
   requestDraw();
 });
 reconnect.addEventListener('click', start);
@@ -449,7 +449,7 @@ try {
       rotated = true;
       surface.dataset.rotated = 'true';
       rotate.setAttribute('aria-pressed', 'true');
-      setText(element('view-direction'), '��ת�ӽ� �� 180��');
+      setText(element('view-direction'), '旋转视角 · 180°');
     }
   }
 } catch { /* Ignore incomplete preferences and retain usable defaults. */ }
@@ -503,12 +503,12 @@ fullscreen.addEventListener('click', async () => {
   try {
     if (document.fullscreenElement) await document.exitFullscreen();
     else if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
-    else notifyAction('��ǰ�������֧��ȫ�����ɺ����鿴��ͼ��');
-  } catch { notifyAction('��ʱ�޷�����ȫ������ʹ���������ȫ�����ܡ�'); }
+    else notifyAction('当前浏览器不支持全屏，可横屏查看地图。');
+  } catch { notifyAction('暂时无法进入全屏，请使用浏览器的全屏功能。'); }
 });
 document.addEventListener('fullscreenchange', () => {
   fullscreen.setAttribute('aria-pressed', String(Boolean(document.fullscreenElement)));
-  fullscreen.querySelector('span').textContent = document.fullscreenElement ? '�˳�' : 'ȫ��';
+  fullscreen.querySelector('span').textContent = document.fullscreenElement ? '退出' : '全屏';
   requestDraw();
 });
 if (window.ResizeObserver) new ResizeObserver(requestDraw).observe(surface);

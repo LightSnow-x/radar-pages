@@ -5,61 +5,61 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#080f15">
   <meta name="referrer" content="no-referrer">
-  <title>Ͽ���״� �� ʵʱս��</title>
+  <title>峡谷雷达 · 实时战场</title>
   <link rel="icon" type="image/png" href="./branding/game-icon.png">
   <link rel="stylesheet" href="./viewer.css?v=b4f321204727">
   <script defer src="../transport.js?v=cebbfdc810eb" data-game="sgame" data-endpoint="wss://xiaoxue.aaocc.cn:19560/radar-ws"></script>
   <script type="module" src="./radar.js?v=b4f321204727"></script>
 </head>
 <body class="viewer-page" data-mode="web">
-  <a class="skip-link" href="#map-surface">����ս����ͼ</a>
+  <a class="skip-link" href="#map-surface">跳到战场地图</a>
   <header class="app-header">
-    <a href="./" class="brand" aria-label="�����״��¼ҳ"><img src="./branding/game-icon.png" width="40" height="40" alt=""><span>Ͽ���״�<small>������ҫ</small></span></a>
-    <div class="room-badge"><span>����</span><strong id="room-number">��</strong></div>
-    <p id="connection" class="connection" data-state="waiting" role="status">��������</p>
+    <a href="./" class="brand" aria-label="返回雷达登录页"><img src="./branding/game-icon.png" width="40" height="40" alt=""><span>峡谷雷达<small>王者荣耀</small></span></a>
+    <div class="room-badge"><span>房间</span><strong id="room-number">—</strong></div>
+    <p id="connection" class="connection" data-state="waiting" role="status">正在连接</p>
   </header>
   <main class="battlefield">
-    <div class="battle-heading"><div><span class="eyebrow">BATTLEFIELD</span><h1 id="map-name">�ȴ��Ծ�</h1></div><div class="spectators"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span><b id="viewers">��</b> �˹�ս</span></div></div>
-    <section class="map-arena" aria-label="ʵʱս����ͼ">
+    <div class="battle-heading"><div><span class="eyebrow">BATTLEFIELD</span><h1 id="map-name">等待对局</h1></div><div class="spectators"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span><b id="viewers">—</b> 人观战</span></div></div>
+    <section class="map-arena" aria-label="实时战场地图">
       <div id="map-surface" class="map-surface" tabindex="0">
-        <img id="map-image" class="map-image" width="702" height="702" alt="����Ͽ�ȵ�ͼ" hidden>
-        <canvas id="markers" role="img" aria-label="Ӣ�ۡ�Ұ���ͷ�������ʵʱλ��" hidden></canvas>
-        <div class="map-message" id="map-message"><div class="waiting-emblem" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="m24 4 20 20-20 20L4 24Z"/><path d="m24 13 11 11-11 11-11-11Z"/><path d="M24 4v9m20 11H35M24 44v-9M4 24h9"/></svg></div><p id="map-message-title">�������ӷ���</p><p id="map-message-detail">���ӳɹ����Զ�ͬ���Ծ֡�</p><button id="reconnect" class="accent-button" type="button" hidden>��������</button></div>
+        <img id="map-image" class="map-image" width="702" height="702" alt="王者峡谷地图" hidden>
+        <canvas id="markers" role="img" aria-label="英雄、野区和防御塔的实时位置" hidden></canvas>
+        <div class="map-message" id="map-message"><div class="waiting-emblem" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="m24 4 20 20-20 20L4 24Z"/><path d="m24 13 11 11-11 11-11-11Z"/><path d="M24 4v9m20 11H35M24 44v-9M4 24h9"/></svg></div><p id="map-message-title">正在连接房间</p><p id="map-message-detail">连接成功后自动同步对局。</p><button id="reconnect" class="accent-button" type="button" hidden>重新连接</button></div>
       </div>
     </section>
-    <div class="battle-caption"><span id="view-direction">��׼�ӽ�</span><ul class="map-legend" aria-label="��ͼͼ��"><li><i class="own"></i>�ҷ�</li><li><i class="enemy"></i>�з�</li><li><i class="neutral"></i>Ұ��</li></ul></div>
+    <div class="battle-caption"><span id="view-direction">标准视角</span><ul class="map-legend" aria-label="地图图例"><li><i class="own"></i>我方</li><li><i class="enemy"></i>敌方</li><li><i class="neutral"></i>野区</li></ul></div>
     <p id="map-note" class="map-note" role="status" hidden></p>
   </main>
-  <nav class="action-dock" aria-label="ս������">
-    <button id="open-menu" class="dock-button menu-button" type="button" aria-haspopup="dialog" aria-controls="radar-menu" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="9" cy="18" r="2"/></svg><span>�˵�</span></button>
+  <nav class="action-dock" aria-label="战场操作">
+    <button id="open-menu" class="dock-button menu-button" type="button" aria-haspopup="dialog" aria-controls="radar-menu" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="9" cy="18" r="2"/></svg><span>菜单</span></button>
     <span class="dock-divider" aria-hidden="true"></span>
-    <button id="rotate-map" class="dock-button" type="button" aria-pressed="false" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1 7M4 4v6h6"/></svg><span>��ת</span></button>
-    <button id="fullscreen" class="dock-button" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg><span>ȫ��</span></button>
-    <a id="change-room" class="dock-button" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H4v16h6m4-12 4 4-4 4m-5-4h12"/></svg><span>����</span></a>
+    <button id="rotate-map" class="dock-button" type="button" aria-pressed="false" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1 7M4 4v6h6"/></svg><span>旋转</span></button>
+    <button id="fullscreen" class="dock-button" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg><span>全屏</span></button>
+    <a id="change-room" class="dock-button" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H4v16h6m4-12 4 4-4 4m-5-4h12"/></svg><span>换房</span></a>
   </nav>
   <dialog id="radar-menu" class="radar-menu" aria-labelledby="menu-title">
     <div class="sheet-handle" aria-hidden="true"></div>
-    <header class="menu-header"><div><span class="eyebrow">RADAR CONTROL</span><h2 id="menu-title">ս���˵�</h2></div><button id="close-menu" class="icon-button" type="button" aria-label="�رղ˵�"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></header>
-    <div class="menu-tabs" role="tablist" aria-label="�˵�����"><button id="layers-tab" role="tab" aria-selected="true" aria-controls="layers-panel" type="button">��ͼ��ʾ</button><button id="intel-tab" role="tab" aria-selected="false" aria-controls="intel-panel" tabindex="-1" type="button">ʵʱս��</button></div>
+    <header class="menu-header"><div><span class="eyebrow">RADAR CONTROL</span><h2 id="menu-title">战场菜单</h2></div><button id="close-menu" class="icon-button" type="button" aria-label="关闭菜单"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></header>
+    <div class="menu-tabs" role="tablist" aria-label="菜单分类"><button id="layers-tab" role="tab" aria-selected="true" aria-controls="layers-panel" type="button">地图显示</button><button id="intel-tab" role="tab" aria-selected="false" aria-controls="intel-panel" tabindex="-1" type="button">实时战况</button></div>
     <section id="layers-panel" role="tabpanel" aria-labelledby="layers-tab">
-      <p class="section-hint">��������ĵ�ս����Ϣ</p>
-      <fieldset id="layer-options" class="layer-options"><legend class="sr-only">��ʾͼ��</legend>
-        <label><span class="layer-symbol own"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg></span><span class="layer-caption">����λ��<small>��λ��ǰ�ٿص�Ӣ��</small></span><input type="checkbox" name="self" checked aria-label="��ʾ����λ��"><i class="toggle-track" aria-hidden="true"></i></label>
-        <label><span class="layer-symbol enemy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 5v8l-8 5-8-5V8l8-5ZM8 10l2 2m6-2-2 2M9 16h6"/></svg></span><span class="layer-caption">�з�Ӣ��<small>�ɼ�λ��������ֵ</small></span><input type="checkbox" name="heroes" checked aria-label="��ʾ�з�Ӣ��"><i class="toggle-track" aria-hidden="true"></i></label>
-        <label><span class="layer-symbol neutral"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V7m0 7L6 9 3 3l7 3 2 4m0 8 7-6 2-7-7 4-2 5"/></svg></span><span class="layer-caption">Ұ��Ӫ��<small>Ұ��λ����ˢ�µ���ʱ</small></span><input type="checkbox" name="monsters" checked aria-label="��ʾҰ��Ӫ��"><i class="toggle-track" aria-hidden="true"></i></label>
-        <label><span class="layer-symbol tower"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3v6l3 3-1 9m12-18v6l-3 3 1 9M5 5h4V2h6v3h4M4 21h16M9 9h6"/></svg></span><span class="layer-caption">��������ˮ��<small id="structure-status">�ȴ�����������</small></span><input type="checkbox" name="structures" checked disabled aria-label="��ʾ��������ˮ��" aria-describedby="structure-status"><i class="toggle-track" aria-hidden="true"></i></label>
-        <label><span class="layer-symbol health"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM8 12h8m-4-4v8"/></svg></span><span class="layer-caption">����Ѫ��<small>�ڽ����·���ʾ������</small></span><input type="checkbox" name="structureHealth" checked aria-label="��ʾ����Ѫ��"><i class="toggle-track" aria-hidden="true"></i></label>
+      <p class="section-hint">保留你关心的战场信息</p>
+      <fieldset id="layer-options" class="layer-options"><legend class="sr-only">显示图层</legend>
+        <label><span class="layer-symbol own"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg></span><span class="layer-caption">自身位置<small>定位当前操控的英雄</small></span><input type="checkbox" name="self" checked aria-label="显示自身位置"><i class="toggle-track" aria-hidden="true"></i></label>
+        <label><span class="layer-symbol enemy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 5v8l-8 5-8-5V8l8-5ZM8 10l2 2m6-2-2 2M9 16h6"/></svg></span><span class="layer-caption">敌方英雄<small>可见位置与生命值</small></span><input type="checkbox" name="heroes" checked aria-label="显示敌方英雄"><i class="toggle-track" aria-hidden="true"></i></label>
+        <label><span class="layer-symbol neutral"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V7m0 7L6 9 3 3l7 3 2 4m0 8 7-6 2-7-7 4-2 5"/></svg></span><span class="layer-caption">野区营地<small>野怪位置与刷新倒计时</small></span><input type="checkbox" name="monsters" checked aria-label="显示野区营地"><i class="toggle-track" aria-hidden="true"></i></label>
+        <label><span class="layer-symbol tower"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3v6l3 3-1 9m12-18v6l-3 3 1 9M5 5h4V2h6v3h4M4 21h16M9 9h6"/></svg></span><span class="layer-caption">防御塔与水晶<small id="structure-status">等待防御塔数据</small></span><input type="checkbox" name="structures" checked disabled aria-label="显示防御塔与水晶" aria-describedby="structure-status"><i class="toggle-track" aria-hidden="true"></i></label>
+        <label><span class="layer-symbol health"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM8 12h8m-4-4v8"/></svg></span><span class="layer-caption">建筑血量<small>在建筑下方显示生命条</small></span><input type="checkbox" name="structureHealth" checked aria-label="显示建筑血量"><i class="toggle-track" aria-hidden="true"></i></label>
       </fieldset>
-      <p class="menu-footnote">��ʾƫ�ûᱣ���ڵ�ǰ�������</p>
+      <p class="menu-footnote">显示偏好会保存在当前浏览器。</p>
     </section>
     <section id="intel-panel" role="tabpanel" aria-labelledby="intel-tab" hidden>
-      <dl class="battle-stats"><div><dt>�ɼ��з�</dt><dd id="hero-count">��</dd></div><div><dt>Ұ��Ŀ��</dt><dd id="camp-count">��</dd></div><div><dt>ˢ����</dt><dd id="respawn-count">��</dd></div></dl>
-      <section class="structure-summary" aria-label="������״̬"><h3>���������</h3><div class="tower-score"><span class="own">�ҷ� <b id="own-towers">��</b></span><span class="score-divider">/</span><span class="enemy">�з� <b id="enemy-towers">��</b></span></div><p id="tower-note" class="section-hint">�ȴ�����������</p></section>
-      <section class="timers-section" aria-label="Ұ��ˢ�¼�ʱ"><h3>Ұ��ˢ��<span>�����ع�ս��</span></h3><div id="respawn-list" class="respawn-list"><p class="intel-empty">����Ծֺ���ʾӪ��ˢ��ʱ��</p></div></section>
+      <dl class="battle-stats"><div><dt>可见敌方</dt><dd id="hero-count">—</dd></div><div><dt>野区目标</dt><dd id="camp-count">—</dd></div><div><dt>刷新中</dt><dd id="respawn-count">—</dd></div></dl>
+      <section class="structure-summary" aria-label="防御塔状态"><h3>防御塔存活</h3><div class="tower-score"><span class="own">我方 <b id="own-towers">—</b></span><span class="score-divider">/</span><span class="enemy">敌方 <b id="enemy-towers">—</b></span></div><p id="tower-note" class="section-hint">等待防御塔数据</p></section>
+      <section class="timers-section" aria-label="野区刷新计时"><h3>野区刷新<span>即将回归战场</span></h3><div id="respawn-list" class="respawn-list"><p class="intel-empty">进入对局后显示营地刷新时间</p></div></section>
     </section>
-    <footer class="menu-footer"><span class="web-only">��ҳ�״�</span><span class="lan-only">�������״�</span><span>LIGHTSNOW</span></footer>
+    <footer class="menu-footer"><span class="web-only">网页雷达</span><span class="lan-only">局域网雷达</span><span>LIGHTSNOW</span></footer>
   </dialog>
   <p id="action-status" class="action-status" role="status" hidden></p>
-  <noscript><p class="no-script">������ JavaScript����������ܽ���ʵʱ�Ծ����ݡ�</p></noscript>
+  <noscript><p class="no-script">请启用 JavaScript，浏览器才能接收实时对局数据。</p></noscript>
 </body>
 </html>
