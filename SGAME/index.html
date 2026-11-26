@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a131b">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="输入四位房间号，查看王者荣耀峡谷雷达。">
+  <title>王者荣耀 · 峡谷雷达</title>
+  <link rel="stylesheet" href="./radar.css?v=afa27b9f1c6a">
+  <script defer src="./entry.js?v=afa27b9f1c6a"></script>
+</head>
+<body class="entry-page" data-mode="web">
+  <header class="site-header wrap">
+    <a href="./" class="brand" aria-label="王者荣耀雷达首页">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>王者荣耀</span>
+    </a>
+    <nav class="header-nav" aria-label="雷达导航">
+      <span class="mode-label web-only">网页雷达</span>
+      <span class="mode-label lan-only">局域网雷达</span>
+      <a class="web-only" href="../">返回大厅</a>
+    </nav>
+  </header>
+
+  <main class="entry-layout wrap">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-heading">
+        <h1 id="hero-title">峡谷雷达</h1>
+      </div>
+      <figure class="atlas">
+        <div class="atlas-inner">
+          <img src="./maps/pvp_9_small.png" width="344" height="344" alt="王者峡谷底图预览" decoding="async" fetchpriority="high">
+        </div>
+        <figcaption>王者峡谷 · 底图预览</figcaption>
+      </figure>
+    </section>
+
+    <section class="entry-panel" aria-labelledby="entry-title">
+      <h2 id="entry-title">登录雷达房间</h2>
+      <p id="room-help" class="entry-help web-only">在手机端开启「网页雷达」，输入共享页面上显示的房间号。</p>
+      <p id="lan-help" class="entry-help lan-only">连接游戏设备所在的局域网，输入「局域网雷达」显示的房间号。</p>
+      <form id="join-form" action="./view.html" method="get">
+        <label for="room">四位房间号</label>
+        <input id="room" name="room" type="text" inputmode="numeric" autocomplete="off"
+               maxlength="4" pattern="[0-9]{4}" placeholder="0000" required
+               spellcheck="false" aria-describedby="room-status">
+        <button id="enter-room" class="primary-button" type="submit">进入雷达</button>
+        <p id="room-status" class="room-status" role="status"></p>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

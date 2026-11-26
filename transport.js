@@ -9,6 +9,8 @@
     codm: '/codm/' + room,
     cfm: '/cfm/' + room,
     dfm: '/dfm/' + room,
+    lolm: '/lolm/' + room,
+    sgame: '/SGAME/' + room,
     valorant: '/Valorant/r/' + room + '/',
     status: '/online'
   }[game];
@@ -99,7 +101,8 @@
       } else if (message.type === 'event' && feed && messages.has(message.event) && typeof message.data === 'string') {
         feed.emit(message.event, message.data);
       } else if (message.type === 'stream-error' && feed) {
-        feed.disconnected();
+        if (game === 'lolm' || game === 'sgame') socket.close();
+        else feed.disconnected();
       }
     });
     socket.addEventListener('close', () => {
@@ -110,7 +113,10 @@
         channel = undefined;
         nextConnection = Date.now() + 1000;
         if (!state.status || state.status === 200) showStatus(503);
-        if (feed) feed.disconnected();
+        if (feed) {
+          feed.roomStatus = state.status && state.status !== 200 ? state.status : 503;
+          feed.disconnected();
+        }
       }
     });
     return state.ready;
@@ -213,8 +219,10 @@
     }
 
     async open() {
+      if (this.readyState === 2) return;
       const status = await connect();
       if (this.readyState === 2) return;
+      this.roomStatus = status;
       if (status === 200 && channel?.socket.readyState === WebSocket.OPEN) {
         try {
           channel.socket.send(JSON.stringify({type: 'subscribe'}));
@@ -229,6 +237,7 @@
     connected() {
       if (this.readyState === 2) return;
       this.readyState = 1;
+      this.roomStatus = 200;
       clearTimeout(this.retry);
       this.emit('open');
     }
@@ -237,6 +246,7 @@
       if (this.readyState === 2) return;
       this.readyState = 0;
       this.emit('error');
+      if (this.readyState === 2) return;
       clearTimeout(this.retry);
       this.retry = setTimeout(() => this.open(), 1400);
     }
