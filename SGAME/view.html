@@ -3,65 +3,48 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0a131b">
+  <meta name="theme-color" content="#111823">
   <meta name="referrer" content="no-referrer">
-  <title>峡谷战况 · 王者荣耀雷达</title>
-  <link rel="stylesheet" href="./radar.css?v=afa27b9f1c6a">
+  <title>战场总览 · 王者荣耀雷达</title>
+  <link rel="icon" type="image/png" href="./branding/game-icon.png">
+  <link rel="stylesheet" href="./radar.css?v=e4348ee18ce8">
   <script defer src="../transport.js?v=cebbfdc810eb" data-game="sgame" data-endpoint="wss://xiaoxue.aaocc.cn:19560/radar-ws"></script>
-  <script type="module" src="./radar.js?v=afa27b9f1c6a"></script>
+  <script type="module" src="./radar.js?v=e4348ee18ce8"></script>
 </head>
 <body class="viewer-page" data-mode="web">
-  <header class="site-header wrap">
-    <a href="./" class="brand" aria-label="王者荣耀雷达首页">
-      <span class="brand-mark" aria-hidden="true"></span>
-      <span>王者荣耀</span>
-    </a>
-    <nav class="header-nav" aria-label="雷达导航">
-      <span class="mode-label web-only">网页雷达</span>
-      <span class="mode-label lan-only">局域网雷达</span>
-      <a id="change-room" href="./">更换房间</a>
-    </nav>
-  </header>
-
+  <a class="skip-link" href="#map-surface">跳到战场地图</a>
+  <header class="site-header"><div class="header-inner wrap">
+    <a href="./" class="brand" aria-label="王者荣耀雷达首页"><img class="wordmark" src="./branding/wordmark.png" alt="王者荣耀" width="192" height="51"><span class="brand-product">峡谷雷达</span></a>
+    <nav class="header-nav" aria-label="雷达导航"><span class="nav-current">战场总览<small>BATTLEFIELD</small></span><a id="change-room" href="./">更换房间<small>CHANGE ROOM</small></a></nav>
+  </div></header>
   <main class="viewer wrap">
-    <header class="viewer-heading">
-      <h1>峡谷战况</h1>
-      <p id="connection" class="connection" data-state="waiting" role="status">正在连接</p>
-    </header>
+    <header class="viewer-heading"><div><p class="eyebrow">峡谷视野 · 实时战况</p><h1>战场总览</h1></div><div class="connection-block"><span class="connection-mode web-only">网页雷达</span><span class="connection-mode lan-only">局域网雷达</span><p id="connection" class="connection" data-state="waiting" role="status">正在连接</p></div></header>
     <div class="board">
-      <section class="terrain" aria-label="对局地图">
-        <div class="terrain-header">
-          <h2 id="map-name">对局地图</h2>
-          <button id="rotate-map" class="quiet-button" type="button" aria-pressed="false" disabled>旋转地图</button>
-        </div>
-        <div id="map-surface" class="map-surface">
+      <section class="terrain" aria-label="战场地图">
+        <div class="terrain-header"><div class="map-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Zm6-3v15m6-12v15"/></svg><div><span>当前战场</span><h2 id="map-name">等待对局</h2></div></div><button id="rotate-map" class="quiet-button" type="button" aria-pressed="false" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1 7M4 4v6h6"/></svg><span>旋转视角</span></button></div>
+        <div class="map-stage"><div id="map-surface" class="map-surface" tabindex="0">
           <img id="map-image" class="map-image" width="702" height="702" alt="" hidden>
           <canvas id="markers" aria-label="地图上的实时位置" role="img" hidden></canvas>
-          <div class="map-message" id="map-message">
-            <p id="map-message-title">正在连接房间</p>
-            <p id="map-message-detail">连接成功后自动同步对局。</p>
-            <button id="reconnect" class="quiet-button" type="button" hidden>重新连接</button>
-          </div>
-        </div>
+          <div class="map-message" id="map-message"><div class="waiting-symbol" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="m24 3 6 15 15 6-15 6-6 15-6-15-15-6 15-6Z"/><circle cx="24" cy="24" r="5"/></svg></div><p id="map-message-title">正在连接房间</p><p id="map-message-detail">连接成功后自动同步对局。</p><button id="reconnect" class="primary-button" type="button" hidden>重新连接</button></div>
+        </div></div>
+        <div class="map-footer"><span id="view-direction">标准视角</span><ul class="map-legend" aria-label="地图图例"><li><i class="own"></i>自身</li><li><i class="enemy"></i>敌方</li><li><i class="neutral"></i>野区</li></ul></div>
         <p id="map-note" class="map-note" hidden></p>
       </section>
-
-      <aside class="viewer-side" aria-label="房间和地图图层">
-        <dl class="room-details">
-          <div><dt>房间号</dt><dd id="room-number">—</dd></div>
-          <div><dt>观看人数</dt><dd id="viewers">—</dd></div>
-        </dl>
-        <fieldset class="layer-options" id="layer-options">
-          <legend>地图图层</legend>
-          <label><span><i class="legend-symbol own" aria-hidden="true"></i>自身</span><input type="checkbox" name="self" checked></label>
-          <label><span><i class="legend-symbol hero-unit" aria-hidden="true"></i>英雄</span><input type="checkbox" name="heroes" checked></label>
-          <label><span><i class="legend-symbol structure" aria-hidden="true"></i>防御塔与基地</span><input type="checkbox" name="structures" checked aria-describedby="structure-status"></label>
-          <label><span><i class="legend-symbol monster" aria-hidden="true"></i>野区营地</span><input type="checkbox" name="monsters" checked></label>
-          <p id="structure-status" class="layer-note" hidden>当前对局未提供防御塔与基地位置。</p>
-        </fieldset>
+      <aside class="viewer-side" aria-label="房间与战场信息">
+        <section class="room-card" aria-label="当前房间"><div class="room-card-heading"><img src="./branding/game-icon.png" width="192" height="192" alt="王者荣耀游戏图标"><div><span>当前房间</span><strong id="room-number">—</strong></div><svg class="room-signal" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20v-4m5 4v-8m6 8V8m5 12V4"/></svg></div><div class="room-viewers"><span>在线观战</span><span><b id="viewers">—</b> 人</span></div></section>
+        <section class="intel-card" aria-label="对局概况"><h2 class="section-title">对局概况<span>OVERVIEW</span></h2><dl class="battle-stats"><div><dt>可见敌方</dt><dd id="hero-count">—</dd></div><div><dt>野区目标</dt><dd id="camp-count">—</dd></div><div><dt>刷新中</dt><dd id="respawn-count">—</dd></div></dl></section>
+        <section class="layers-card"><fieldset class="layer-options" id="layer-options">
+          <legend class="section-title">显示内容<span>MAP LAYERS</span></legend>
+          <label><span class="layer-caption"><svg class="own-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg><span>自身位置<small>我在战场中的位置</small></span></span><input type="checkbox" name="self" checked aria-label="显示自身位置"><i class="toggle-track" aria-hidden="true"></i></label>
+          <label><span class="layer-caption"><svg class="enemy-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-9a7 7 0 0 1 14 0v9l-4-2v-5H9v5l-4 2ZM12 4v5M5 10l4 3m10-3-4 3"/></svg><span>敌方英雄<small>可见位置与生命值</small></span></span><input type="checkbox" name="heroes" checked aria-label="显示敌方英雄"><i class="toggle-track" aria-hidden="true"></i></label>
+          <label><span class="layer-caption"><svg class="jungle-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V7m0 7L6 9 3 3l7 3 2 4m0 8 7-6 2-7-7 4-2 5"/></svg><span>野区营地<small>野怪与复活倒计时</small></span></span><input type="checkbox" name="monsters" checked aria-label="显示野区营地"><i class="toggle-track" aria-hidden="true"></i></label>
+          <label><span class="layer-caption"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3v6l3 3-1 9m12-18v6l-3 3 1 9M5 5h4V2h6v3h4M4 21h16M9 9h6"/></svg><span>防御塔与基地<small id="structure-status">等待目标位置</small></span></span><input type="checkbox" name="structures" checked disabled aria-label="显示防御塔与基地" aria-describedby="structure-status"><i class="toggle-track" aria-hidden="true"></i></label>
+        </fieldset></section>
+        <section class="timers-card" aria-label="野区刷新计时"><h2 class="section-title">野区刷新<span>RESPAWN</span></h2><div id="respawn-list" class="respawn-list"><p class="intel-empty">进入对局后显示营地刷新时间</p></div></section>
       </aside>
     </div>
     <noscript><p class="no-script">请启用 JavaScript，浏览器才能接收实时对局数据。</p></noscript>
   </main>
+  <footer class="viewer-footer wrap"><span>LIGHTSNOW · 峡谷战术视野</span><span>战况随对局同步</span></footer>
 </body>
 </html>

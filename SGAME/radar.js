@@ -1,4 +1,4 @@
-import { mapPoint, parseRadarFrame, readRadarEvents } from './radar-protocol.mjs?v=afa27b9f1c6a';
+import { mapPoint, parseRadarFrame, readRadarEvents } from './radar-protocol.mjs?v=e4348ee18ce8';
 
 const element = id => document.getElementById(id);
 const room = new URLSearchParams(location.search).get('room') || '';
@@ -36,6 +36,7 @@ let drawId = 0;
 let staleTimer = 0;
 let retryTimer = 0;
 let retryDelay = 1500;
+let intelSignature = '';
 
 element('room-number').textContent = roomValid ? room : '—';
 if (roomValid) element('change-room').href = './?room=' + room;
@@ -49,6 +50,39 @@ function setConnection(state, label) {
   setText(connection, label);
 }
 
+function renderIntel(current) {
+  const cooling = current ? current.m.filter(row => row[3] > 0).sort((a, b) => a[3] - b[3]) : [];
+  setText(element('hero-count'), current ? String(current.h.length) : '—');
+  setText(element('camp-count'), current ? String(current.m.filter(row => row[3] === 0).length) : '—');
+  setText(element('respawn-count'), current ? String(cooling.length) : '—');
+  const shown = cooling.slice(0, 3);
+  const signature = current ? JSON.stringify(shown) : 'waiting';
+  if (signature === intelSignature) return;
+  intelSignature = signature;
+  const list = element('respawn-list');
+  list.replaceChildren();
+  if (!shown.length) {
+    const empty = document.createElement('p');
+    empty.className = 'intel-empty';
+    empty.textContent = current ? '当前没有刷新中的营地' : '进入对局后显示营地刷新时间';
+    list.append(empty);
+    return;
+  }
+  for (const [kind, , , seconds] of shown) {
+    const row = document.createElement('div');
+    row.className = 'respawn-row';
+    const caption = document.createElement('span');
+    const art = document.createElement('img');
+    art.src = './icons/monsters/' + (monsterIcons.get(kind) || 'Icon_XiaoGuai_2') + '.png';
+    art.alt = '';
+    caption.append(art, document.createTextNode('野区营地'));
+    const time = document.createElement('strong');
+    time.textContent = seconds < 60 ? seconds + ' 秒' : Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
+    row.append(caption, time);
+    list.append(row);
+  }
+}
+
 function showMessage(title, detail, canRetry = false) {
   setText(element('map-message-title'), title);
   setText(element('map-message-detail'), detail);
@@ -58,9 +92,10 @@ function showMessage(title, detail, canRetry = false) {
 
 function showNoFrame(state, label, title, detail, canRetry = false) {
   frame = null;
+  renderIntel(null);
   clearTimeout(staleTimer);
   setConnection(state, label);
-  setText(mapName, '对局地图');
+  setText(mapName, '等待对局');
   mapNote.hidden = true;
   rotate.disabled = true;
   options.namedItem('structures').disabled = true;
@@ -92,7 +127,7 @@ function requestDraw() {
 function loadMap() {
   if (mapLoad !== 'idle') return;
   mapLoad = 'loading';
-  mapImage.sizes = '(max-width: 47rem) calc(100vw - 4rem), min(43.875rem, max(22rem, calc(100svh - 12rem)))';
+  mapImage.sizes = '(max-width: 47rem) calc(100vw - 4rem), min(43.875rem, max(25rem, calc(100svh - 20.5rem)))';
   mapImage.srcset = './maps/pvp_9_small.png 344w, ./maps/pvp_9_big.png 702w';
   mapImage.src = './maps/pvp_9_small.png';
 }
@@ -259,6 +294,8 @@ function handleEvent(active, type, data) {
     return;
   }
   frame = next;
+  renderIntel(frame);
+  document.body.dataset.camp = String(frame.camp);
   clearTimeout(staleTimer);
   staleTimer = setTimeout(() => {
     if (session === active) showNoFrame('waiting', '等待更新', '等待对局数据', '收到新数据后自动恢复。');
@@ -368,6 +405,7 @@ rotate.addEventListener('click', () => {
   rotated = !rotated;
   surface.dataset.rotated = String(rotated);
   rotate.setAttribute('aria-pressed', String(rotated));
+  setText(element('view-direction'), rotated ? '旋转视角 · 180°' : '标准视角');
   requestDraw();
 });
 reconnect.addEventListener('click', start);
