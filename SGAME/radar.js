@@ -1,4 +1,4 @@
-import { mapPoint, parseRadarFrame, readRadarEvents } from './radar-protocol.mjs?v=a363257b6fd3';
+import { heroPortraitUrls, mapPoint, parseRadarFrame, readRadarEvents } from './radar-protocol.mjs?v=1154e2e1dd06';
 
 const element = id => document.getElementById(id);
 const room = new URLSearchParams(location.search).get('room') || '';
@@ -28,6 +28,7 @@ const monsterIcons = new Map([
 ]);
 const colors = { 1: '#90dbff', 2: '#ffa093' };
 const images = new Map();
+const portraits = new Map();
 let session;
 let frame;
 let mapLoad = 'idle';
@@ -259,7 +260,7 @@ function paintStructures(marker, position) {
 
 function paintHeroes(size, marker, position) {
   const enemy = frame.camp === 1 ? 2 : 1;
-  const radius = marker * .5;
+  const radius = Math.max(11, marker * .55);
   for (const [id, px, py, hp] of frame.h) {
     const [x, y] = position(px, py);
     dot(x, y, radius + 2, '#071620');
@@ -272,8 +273,40 @@ function paintHeroes(size, marker, position) {
       context.lineWidth = 1.7;
       context.stroke();
     }
-    label(String(id), x, y, size < 360 ? 9 : 11);
+    if (!paintPortrait(id, x, y, radius - 2)) label(String(id), x, y, size < 360 ? 10 : 11);
   }
+}
+
+function paintPortrait(id, x, y, radius) {
+  if (!options.namedItem('portraits').checked) return false;
+  const urls = heroPortraitUrls(id);
+  if (!urls.length) return false;
+  let image = portraits.get(id);
+  if (!image) {
+    image = new Image();
+    image.referrerPolicy = 'no-referrer';
+    image.decoding = 'async';
+    // Each browser loads these public CDN URLs directly. No relay/proxy,
+    // embedded portrait assets or publisher-supplied URL is involved.
+    image.addEventListener('load', requestDraw);
+    let attempt = 0;
+    image.addEventListener('error', () => {
+      if (++attempt < urls.length) image.src = urls[attempt];
+    });
+    if (portraits.size >= 64) portraits.delete(portraits.keys().next().value);
+    portraits.set(id, image);
+    image.src = urls[0];
+  }
+  if (!image.complete || !image.naturalWidth) return false;
+  const side = Math.min(image.naturalWidth, image.naturalHeight);
+  context.save();
+  context.beginPath();
+  context.arc(x, y, radius, 0, Math.PI * 2);
+  context.clip();
+  context.drawImage(image, (image.naturalWidth - side) / 2, (image.naturalHeight - side) / 2,
+    side, side, x - radius, y - radius, radius * 2, radius * 2);
+  context.restore();
+  return true;
 }
 
 function draw() {
@@ -294,9 +327,11 @@ function draw() {
   if (options.namedItem('heroes').checked) paintHeroes(size, marker, position);
   if (options.namedItem('self').checked && frame.s) {
     const [x, y] = position(...frame.s);
-    dot(x, y, marker * .51, '#071620');
-    dot(x, y, marker * .41, colors[frame.camp]);
-    dot(x, y, marker * .15, '#0b2030');
+    const radius = Math.max(11, marker * .55);
+    dot(x, y, radius + 2, '#071620');
+    dot(x, y, radius, colors[frame.camp]);
+    if (!paintPortrait(frame.sid, x, y, radius - 2)) dot(x, y, radius * .4, '#0b2030');
+    dot(x, y + radius + 2, 2.5, '#ecfff6');
   }
 }
 

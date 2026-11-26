@@ -29,8 +29,15 @@ export function parseRadarFrame(raw) {
   const structures = frame.t == null || rows(frame.t, 48, 5, ([team, kind, x, y, hp]) =>
     camp(team) && integer(kind, 1, 2) && coordinate(x) && coordinate(y) && percent(hp));
   if (!camp(frame.camp) || !heroes || !monsters || !structures || (frame.s != null && !point(frame.s))) return null;
+  if (frame.sid != null && !integer(frame.sid, 100, 9999)) return null;
   if (frame.map !== null && (typeof frame.map !== 'string' || !/^[a-z0-9_]{1,24}$/.test(frame.map))) return null;
   return frame;
+}
+
+export function heroPortraitUrls(id) {
+  if (!integer(id, 100, 9999)) return [];
+  const path = `https://game.gtimg.cn/images/yxzj/img201606/heroimg/${id}/${id}`;
+  return [path + '.jpg', path + '.png'];
 }
 
 export function mapPoint(x, y, size, rotated) {
