@@ -1,4 +1,4 @@
-import { abilityIconUrl, abilityState, heroPortraitUrls, mapPoint, parseRadarFrame, pvp9MapId, readRadarEvents, structureMarkers } from './radar-protocol.mjs?v=b679adc25f90';
+import { abilityIconUrl, abilityState, heroPortraitUrls, mapPoint, parseRadarFrame, pvp9MapId, readRadarEvents, structureMarkers, unconfirmedHeroIds } from './radar-protocol.mjs?v=20ceaaa68855';
 
 const element = id => document.getElementById(id);
 const room = new URLSearchParams(location.search).get('room') || '';
@@ -34,6 +34,7 @@ const images = new Map();
 const portraits = new Map();
 let session;
 let frame;
+let dimmedHeroes = new Set();
 let mapLoad = 'idle';
 let rotated = false;
 let healthStyle = 'circular';
@@ -58,7 +59,7 @@ function setConnection(state, label) {
 
 function renderIntel(current) {
   const cooling = current ? current.m.filter(row => row[3] > 0).sort((a, b) => a[3] - b[3]) : [];
-  setText(element('hero-count'), current ? String(current.h.length + (current.u?.length ?? 0)) : '—');
+  setText(element('hero-count'), current ? String(current.h.length) : '—');
   setText(element('camp-count'), current ? String(current.m.filter(row => row[3] === 0).length) : '—');
   setText(element('respawn-count'), current ? String(cooling.length) : '—');
   if (!web) {
@@ -434,13 +435,13 @@ function paintHeroHealth(x, y, radius, hp) {
   context.stroke();
 }
 
-function paintHeroes(rows, size, marker, position, opacity) {
-  if (!rows?.length) return;
+function paintHeroes(size, marker, position) {
+  if (!frame.h.length) return;
   const enemy = frame.camp === 1 ? 2 : 1;
   const radius = Math.max(11, marker * .55);
   context.save();
-  context.globalAlpha = opacity;
-  for (const [id, px, py, hp] of rows) {
+  for (const [id, px, py, hp] of frame.h) {
+    context.globalAlpha = dimmedHeroes.has(id) ? .65 : 1;
     const [x, y] = position(px, py);
     dot(x, y, radius + 2, '#071620');
     dot(x, y, radius, colors[enemy]);
@@ -506,10 +507,7 @@ function draw() {
   }
   if (options.namedItem('structures').checked) paintStructures(marker, position);
   if (options.namedItem('monsters').checked) paintMonsters(size, marker, position);
-  if (options.namedItem('heroes').checked) {
-    paintHeroes(frame.u, size, marker, position, .65);
-    paintHeroes(frame.h, size, marker, position, 1);
-  }
+  if (options.namedItem('heroes').checked) paintHeroes(size, marker, position);
   if (options.namedItem('self').checked && frame.s) {
     const [x, y] = position(...frame.s);
     const radius = Math.max(11, marker * .55);
@@ -539,6 +537,7 @@ function handleEvent(active, type, data) {
     return;
   }
   frame = next;
+  dimmedHeroes = unconfirmedHeroIds(frame.a);
   renderIntel(frame);
   renderEnemyPanel(frame);
   options.namedItem('lanes').disabled = frame.l == null;

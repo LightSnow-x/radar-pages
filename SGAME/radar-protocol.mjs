@@ -39,9 +39,6 @@ const ability = (row, summoner) => Array.isArray(row) && row.length === 3 &&
   (!summoner || row[0] === 0 || row[0] >= 80000) &&
   ((row[1] === -1 && row[2] === -1) || (integer(row[1], 0, 86400) && integer(row[2], 0, 30)));
 
-const heroRows = value => rows(value, 64, 4, ([id, x, y, hp]) =>
-  integer(id, 100, 9999) && coordinate(x) && coordinate(y) && percent(hp));
-
 export function parseRadarFrame(raw) {
   let frame;
   try {
@@ -52,8 +49,8 @@ export function parseRadarFrame(raw) {
   if (frame?.version !== 1 || typeof frame.ready !== 'boolean') return null;
   if (frame.demo != null && typeof frame.demo !== 'boolean') return null;
   if (!frame.ready) return { ready: false };
-  if (!heroRows(frame.h)) return null;
-  if (frame.u != null && (!heroRows(frame.u) || frame.h.length + frame.u.length > 64)) return null;
+  const heroes = rows(frame.h, 64, 4, ([id, x, y, hp]) => integer(id, 100, 9999) &&
+    coordinate(x) && coordinate(y) && percent(hp));
   const monsters = rows(frame.m, 256, 4, ([kind, x, y, seconds]) => integer(kind, 0, 0x7fffffff) &&
     coordinate(x) && coordinate(y) && integer(seconds, 0, 86400));
   const structures = frame.t == null || rows(frame.t, 48, 5, ([team, kind, x, y, hp]) =>
@@ -67,10 +64,23 @@ export function parseRadarFrame(raw) {
       Array.isArray(normal) && normal.length >= 3 && normal.length <= 4 &&
       normal.every(row => ability(row, false)) && ability(summon, true);
   });
-  if (!camp(frame.camp) || !monsters || !structures || !lanes || !skills || (frame.s != null && !point(frame.s))) return null;
+  if (!camp(frame.camp) || !heroes || !monsters || !structures || !lanes || !skills || (frame.s != null && !point(frame.s))) return null;
   if (frame.sid != null && !integer(frame.sid, 100, 9999)) return null;
   if (frame.map !== null && (typeof frame.map !== 'string' || !/^[a-z0-9_]{1,24}$/.test(frame.map))) return null;
   return frame;
+}
+
+export function unconfirmedHeroIds(roster) {
+  const dimmed = new Set();
+  const other = new Set();
+  for (const [, id, state] of roster ?? []) {
+    if (state === 0 || state === 2) dimmed.add(id);
+    else other.add(id);
+  }
+  // A hero type can appear more than once. Use normal styling when its
+  // roster entries disagree rather than attaching a state to the wrong marker.
+  for (const id of other) dimmed.delete(id);
+  return dimmed;
 }
 
 export function heroPortraitUrls(id) {
