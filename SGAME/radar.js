@@ -1,4 +1,4 @@
-import { heroPortraitUrls, mapPoint, parseRadarFrame, readRadarEvents } from './radar-protocol.mjs?v=1154e2e1dd06';
+import { heroPortraitUrls, mapPoint, parseRadarFrame, readRadarEvents } from './radar-protocol.mjs?v=066ce3730ad7';
 
 const element = id => document.getElementById(id);
 const room = new URLSearchParams(location.search).get('room') || '';
@@ -18,6 +18,7 @@ const mapMessage = element('map-message');
 const viewers = element('viewers');
 const layers = element('layer-options');
 const options = layers.elements;
+const healthStyles = element('health-style');
 const structureStatus = element('structure-status');
 const atlasName = 'pvp_9';
 const staleAfter = 4200;
@@ -33,6 +34,7 @@ let session;
 let frame;
 let mapLoad = 'idle';
 let rotated = false;
+let healthStyle = 'circular';
 let drawId = 0;
 let staleTimer = 0;
 let retryTimer = 0;
@@ -258,6 +260,58 @@ function paintStructures(marker, position) {
   }
 }
 
+function roundedRect(x, y, width, height, rounding) {
+  const r = Math.min(rounding, width / 2, height / 2);
+  context.beginPath();
+  context.moveTo(x + r, y);
+  context.arcTo(x + width, y, x + width, y + height, r);
+  context.arcTo(x + width, y + height, x, y + height, r);
+  context.arcTo(x, y + height, x, y, r);
+  context.arcTo(x, y, x + width, y, r);
+  context.closePath();
+}
+
+function paintHeroHealth(x, y, radius, hp) {
+  const fraction = Math.max(0, Math.min(1, hp / 100));
+  // Match worker_art's minimap palette and the horizontal bar's dimensions.
+  const ring = healthStyle === 'horizontal' ? 1 : fraction;
+  context.beginPath();
+  context.arc(x, y, radius, 0, Math.PI * 2);
+  context.strokeStyle = '#692324';
+  context.lineWidth = 1.7;
+  context.stroke();
+  if (ring > 0) {
+    context.beginPath();
+    context.arc(x, y, radius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * ring);
+    context.strokeStyle = '#fe4f4f';
+    context.stroke();
+  }
+  if (healthStyle !== 'horizontal') return;
+  const portraitRadius = radius - 2;
+  const width = portraitRadius * 2.25;
+  const height = Math.max(4, portraitRadius * .22);
+  const left = x - width / 2;
+  const top = y + portraitRadius * 1.13;
+  const rounding = height * .46;
+  roundedRect(left - 2, top - 2, width + 4, height + 4, rounding + 2);
+  context.fillStyle = '#250c0ee1';
+  context.fill();
+  roundedRect(left, top, width, height, rounding);
+  context.fillStyle = '#692324';
+  context.fill();
+  if (fraction > 0) {
+    context.save();
+    context.clip();
+    context.fillStyle = '#fe4f4f';
+    context.fillRect(left, top, width * fraction, height);
+    context.restore();
+  }
+  roundedRect(left, top, width, height, rounding);
+  context.strokeStyle = '#f8d5d6be';
+  context.lineWidth = 1;
+  context.stroke();
+}
+
 function paintHeroes(size, marker, position) {
   const enemy = frame.camp === 1 ? 2 : 1;
   const radius = Math.max(11, marker * .55);
@@ -266,13 +320,7 @@ function paintHeroes(size, marker, position) {
     dot(x, y, radius + 2, '#071620');
     dot(x, y, radius, colors[enemy]);
     dot(x, y, radius - 2, '#263341');
-    if (hp > 0) {
-      context.beginPath();
-      context.arc(x, y, radius, -Math.PI / 2, -Math.PI / 2 + 2 * Math.PI * hp / 100);
-      context.strokeStyle = '#d5f3b9';
-      context.lineWidth = 1.7;
-      context.stroke();
-    }
+    paintHeroHealth(x, y, radius, hp);
     if (!paintPortrait(id, x, y, radius - 2)) label(String(id), x, y, size < 360 ? 10 : 11);
   }
 }
@@ -470,7 +518,7 @@ rotate.addEventListener('click', () => {
 });
 reconnect.addEventListener('click', start);
 function savePreferences() {
-  const saved = { rotated };
+  const saved = { rotated, healthStyle };
   for (const input of layers.querySelectorAll('input')) saved[input.name] = input.checked;
   try { localStorage.setItem('sgame-radar-view', JSON.stringify(saved)); } catch { /* Storage can be unavailable in private browsing. */ }
 }
@@ -480,6 +528,7 @@ try {
     for (const input of layers.querySelectorAll('input')) {
       if (typeof saved[input.name] === 'boolean') input.checked = saved[input.name];
     }
+    if (saved.healthStyle === 'horizontal' || saved.healthStyle === 'circular') healthStyle = saved.healthStyle;
     if (saved.rotated === true) {
       rotated = true;
       surface.dataset.rotated = 'true';
@@ -488,6 +537,13 @@ try {
     }
   }
 } catch { /* Ignore incomplete preferences and retain usable defaults. */ }
+for (const input of healthStyles.querySelectorAll('input')) input.checked = input.value === healthStyle;
+healthStyles.addEventListener('change', event => {
+  if (event.target.value !== 'horizontal' && event.target.value !== 'circular') return;
+  healthStyle = event.target.value;
+  savePreferences();
+  requestDraw();
+});
 rotate.addEventListener('click', savePreferences);
 layers.addEventListener('change', () => { savePreferences(); requestDraw(); });
 

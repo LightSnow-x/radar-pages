@@ -7,9 +7,9 @@
   <meta name="referrer" content="no-referrer">
   <title>峡谷雷达 · 实时战场</title>
   <link rel="icon" type="image/png" href="./branding/game-icon.png">
-  <link rel="stylesheet" href="./viewer.css?v=1154e2e1dd06">
+  <link rel="stylesheet" href="./viewer.css?v=066ce3730ad7">
   <script defer src="../transport.js?v=cebbfdc810eb" data-game="sgame" data-endpoint="wss://xiaoxue.aaocc.cn:19560/radar-ws"></script>
-  <script type="module" src="./radar.js?v=1154e2e1dd06"></script>
+  <script type="module" src="./radar.js?v=066ce3730ad7"></script>
 </head>
 <body class="viewer-page" data-mode="web">
   <a class="skip-link" href="#map-surface">跳到战场地图</a>
@@ -43,6 +43,10 @@
     <div class="menu-tabs" role="tablist" aria-label="菜单分类"><button id="layers-tab" role="tab" aria-selected="true" aria-controls="layers-panel" type="button">地图显示</button><button id="intel-tab" role="tab" aria-selected="false" aria-controls="intel-panel" tabindex="-1" type="button">实时战况</button></div>
     <section id="layers-panel" role="tabpanel" aria-labelledby="layers-tab">
       <p class="section-hint">保留你关心的战场信息</p>
+      <fieldset id="health-style" class="health-style"><legend>英雄血条样式</legend><div class="health-style-options">
+        <label><input type="radio" name="healthStyle" value="circular" checked><span><i class="health-preview circular" aria-hidden="true"></i><b>圆形血条</b></span></label>
+        <label><input type="radio" name="healthStyle" value="horizontal"><span><i class="health-preview horizontal" aria-hidden="true"></i><b>横向血条</b></span></label>
+      </div></fieldset>
       <fieldset id="layer-options" class="layer-options"><legend class="sr-only">显示图层</legend>
         <label><span class="layer-symbol own"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg></span><span class="layer-caption">自身位置<small>定位当前操控的英雄</small></span><input type="checkbox" name="self" checked aria-label="显示自身位置"><i class="toggle-track" aria-hidden="true"></i></label>
         <label><span class="layer-symbol enemy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 5v8l-8 5-8-5V8l8-5ZM8 10l2 2m6-2-2 2M9 16h6"/></svg></span><span class="layer-caption">敌方英雄<small>可见位置与生命值</small></span><input type="checkbox" name="heroes" checked aria-label="显示敌方英雄"><i class="toggle-track" aria-hidden="true"></i></label>
