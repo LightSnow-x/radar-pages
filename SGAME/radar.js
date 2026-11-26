@@ -1,4 +1,4 @@
-import { heroPortraitUrls, mapPoint, parseRadarFrame, readRadarEvents } from './radar-protocol.mjs?v=066ce3730ad7';
+import { abilityIconUrl, abilityState, heroPortraitUrls, mapPoint, parseRadarFrame, readRadarEvents } from './radar-protocol.mjs?v=62c7ca76b8df';
 
 const element = id => document.getElementById(id);
 const room = new URLSearchParams(location.search).get('room') || '';
@@ -20,6 +20,9 @@ const layers = element('layer-options');
 const options = layers.elements;
 const healthStyles = element('health-style');
 const structureStatus = element('structure-status');
+const lanesStatus = element('lanes-status');
+const enemyCards = new Map();
+let enemyOrder = '';
 const atlasName = 'pvp_9';
 const staleAfter = 4200;
 const monsterIcons = new Map([
@@ -93,6 +96,112 @@ function renderIntel(current) {
   }
 }
 
+function makeAbilityCell(label, summoner, compact = false) {
+  const root = document.createElement('div');
+  root.className = 'ability-cell' + (label === '大招' ? ' ultimate' : '');
+  root.setAttribute('role', 'img');
+  const icon = document.createElement('span');
+  icon.className = 'ability-icon';
+  const fallback = document.createElement('span');
+  fallback.className = 'ability-fallback';
+  fallback.textContent = label;
+  const img = document.createElement('img');
+  img.alt = ''; img.hidden = true; img.referrerPolicy = 'no-referrer'; img.decoding = 'async';
+  img.addEventListener('load', () => { img.hidden = false; });
+  img.addEventListener('error', () => { img.hidden = true; });
+  const value = document.createElement('span');
+  value.className = 'ability-value';
+  const caption = document.createElement('span');
+  caption.className = 'ability-label'; caption.textContent = label;
+  icon.append(fallback, img, value); root.append(icon, caption);
+  return { root, img, value, label, summoner, compact, url: null };
+}
+
+function updateAbilityCell(cell, data) {
+  const state = cell.summoner && data[0] === 0 && data[2] === 0 ? 'none' : abilityState(data);
+  if (cell.root.dataset.state !== state) cell.root.dataset.state = state;
+  const seconds = data[1];
+  const text = state === 'none' ? '—' : state === 'unknown' ? '?' : state === 'unlearned' ? (cell.compact ? '—' : '未学') :
+    state === 'ready' ? '✓' : seconds < 100 ? String(seconds) : Math.ceil(seconds / 60) + 'm';
+  const description = state === 'none' ? '未携带' : state === 'unknown' ? '暂不可用' : state === 'unlearned' ? '未学习' :
+    state === 'ready' ? '就绪' : `冷却 ${seconds} 秒`;
+  const name = cell.compact ? ['一技能', '二技能', '三技能'][Number(cell.label) - 1] : cell.summoner ? '召唤师技能' : cell.label;
+  const title = name + ' · ' + description;
+  if (cell.root.title !== title) { cell.root.title = title; cell.root.setAttribute('aria-label', title); }
+  setText(cell.value, text);
+  const url = abilityIconUrl(data[0], cell.summoner);
+  if (url !== cell.url) {
+    cell.url = url; cell.img.hidden = true;
+    if (url) cell.img.src = url;
+    else cell.img.removeAttribute('src');
+  }
+}
+
+function makeEnemyCard(row) {
+  const [, heroId, , skills] = row;
+  const root = document.createElement('article'); root.className = 'enemy-card';
+  root.setAttribute('aria-label', '敌方英雄 ' + heroId);
+  const header = document.createElement('div'); header.className = 'enemy-header';
+  const portrait = document.createElement('div'); portrait.className = 'enemy-avatar';
+  const code = document.createElement('span'); code.textContent = String(heroId);
+  const img = document.createElement('img'); img.alt = ''; img.hidden = true;
+  img.referrerPolicy = 'no-referrer'; img.decoding = 'async';
+  const urls = heroPortraitUrls(heroId); let attempt = 0;
+  img.addEventListener('load', () => { img.hidden = !options.namedItem('portraits').checked; });
+  img.addEventListener('error', () => {
+    img.hidden = true;
+    if (options.namedItem('portraits').checked && ++attempt < urls.length) img.src = urls[attempt];
+  });
+  portrait.append(code, img);
+  const state = document.createElement('span'); state.className = 'enemy-state';
+  header.append(portrait, state);
+  const primary = document.createElement('div'); primary.className = 'enemy-primary';
+  const ultimate = makeAbilityCell('大招', false);
+  const summoner = makeAbilityCell('召唤', true);
+  primary.append(ultimate.root, summoner.root);
+  const secondary = document.createElement('div'); secondary.className = 'enemy-secondary';
+  const normal = skills.slice(0, -1).map((_, i) => makeAbilityCell(String(i + 1), false, true));
+  secondary.append(...normal.map(cell => cell.root));
+  root.append(header, primary, secondary);
+  return { root, heroId, img, state, ultimate, summoner, normal, count: skills.length, portraitStarted: false };
+}
+
+function renderEnemyPanel(current) {
+  const show = options.namedItem('enemySkills').checked;
+  document.body.dataset.enemyPanel = String(show);
+  element('enemy-panel').hidden = !show;
+  if (!show) return;
+  const rows = current?.a || [];
+  setText(element('enemy-count'), rows.length ? rows.length + ' 名英雄' : '等待同步');
+  const empty = element('enemy-empty');
+  empty.hidden = rows.length > 0;
+  setText(empty, !current ? '进入对局后显示技能计时' : current.a == null ? '等待技能信息' : '当前没有敌方英雄');
+  const order = rows.map(row => row[0] + ':' + row[1]).join(',');
+  const keys = new Set();
+  const children = [];
+  for (const row of rows) {
+    const [slot, heroId, state, skills, summoner] = row;
+    const key = slot + ':' + heroId; keys.add(key);
+    let card = enemyCards.get(key);
+    if (!card || card.count !== skills.length) { card = makeEnemyCard(row); enemyCards.set(key, card); enemyOrder = ''; }
+    card.root.dataset.state = String(state);
+    setText(card.state, ['未知', '可见', '无视野', '已阵亡'][state]);
+    if (options.namedItem('portraits').checked) {
+      if (!card.portraitStarted) { card.portraitStarted = true; card.img.src = heroPortraitUrls(heroId)[0]; }
+      card.img.hidden = !card.img.complete || !card.img.naturalWidth;
+    } else card.img.hidden = true;
+    updateAbilityCell(card.ultimate, skills.at(-1));
+    updateAbilityCell(card.summoner, summoner);
+    card.normal.forEach((cell, i) => updateAbilityCell(cell, skills[i]));
+    children.push(card.root);
+  }
+  for (const key of enemyCards.keys()) if (!keys.has(key)) enemyCards.delete(key);
+  if (order !== enemyOrder || !rows.length) {
+    element('enemy-list').replaceChildren(...children);
+    enemyOrder = order;
+  }
+}
+
 function showMessage(title, detail, canRetry = false) {
   setText(element('map-message-title'), title);
   setText(element('map-message-detail'), detail);
@@ -103,6 +212,9 @@ function showMessage(title, detail, canRetry = false) {
 function showNoFrame(state, label, title, detail, canRetry = false) {
   frame = null;
   renderIntel(null);
+  renderEnemyPanel(null);
+  options.namedItem('lanes').disabled = true;
+  setText(lanesStatus, '等待兵线数据');
   clearTimeout(staleTimer);
   setConnection(state, label);
   setText(mapName, '等待对局');
@@ -370,6 +482,14 @@ function draw() {
   const marker = Math.max(15, Math.min(size * .045, 29));
   const position = (x, y) => mapPoint(x, y, size, rotated);
 
+  if (options.namedItem('lanes').checked) {
+    const radius = Math.max(2, Math.min(3.5, size * .006));
+    for (const [camp, px, py] of frame.l || []) {
+      const [x, y] = position(px, py);
+      dot(x, y, radius + 1, '#06131bea');
+      dot(x, y, radius, colors[camp]);
+    }
+  }
   if (options.namedItem('structures').checked) paintStructures(marker, position);
   if (options.namedItem('monsters').checked) paintMonsters(size, marker, position);
   if (options.namedItem('heroes').checked) paintHeroes(size, marker, position);
@@ -403,12 +523,16 @@ function handleEvent(active, type, data) {
   }
   frame = next;
   renderIntel(frame);
+  renderEnemyPanel(frame);
+  options.namedItem('lanes').disabled = frame.l == null;
+  setText(lanesStatus, frame.l == null ? '等待兵线数据' : '双方兵线 · ' + frame.l.length + ' 个单位');
   document.body.dataset.camp = String(frame.camp);
   clearTimeout(staleTimer);
   staleTimer = setTimeout(() => {
     if (session === active) showNoFrame('waiting', '等待更新', '等待对局数据', '收到新数据后自动恢复。');
   }, staleAfter);
-  setConnection('live', '实时连接');
+  setConnection(frame.demo ? 'demo' : 'live', frame.demo ? '演示数据' : '实时连接');
+  setText(element('data-label'), frame.demo ? '演示数据 · 非实时对局' : 'BATTLEFIELD');
   mapMessage.hidden = true;
   if (layers.dataset.camp !== String(frame.camp)) layers.dataset.camp = String(frame.camp);
   options.namedItem('structures').disabled = frame.t == null;
@@ -545,7 +669,7 @@ healthStyles.addEventListener('change', event => {
   requestDraw();
 });
 rotate.addEventListener('click', savePreferences);
-layers.addEventListener('change', () => { savePreferences(); requestDraw(); });
+layers.addEventListener('change', () => { savePreferences(); renderEnemyPanel(frame); requestDraw(); });
 
 const menu = element('radar-menu');
 const openMenu = element('open-menu');

@@ -13,6 +13,11 @@ function rows(value, count, columns, check) {
     value.every(row => Array.isArray(row) && row.length === columns && check(row));
 }
 
+const ability = (row, summoner) => Array.isArray(row) && row.length === 3 &&
+  integer(row[0], summoner ? 0 : 10000, summoner ? 80999 : 999999) &&
+  (!summoner || row[0] === 0 || row[0] >= 80000) &&
+  ((row[1] === -1 && row[2] === -1) || (integer(row[1], 0, 86400) && integer(row[2], 0, 30)));
+
 export function parseRadarFrame(raw) {
   let frame;
   try {
@@ -21,6 +26,7 @@ export function parseRadarFrame(raw) {
     return null;
   }
   if (frame?.version !== 1 || typeof frame.ready !== 'boolean') return null;
+  if (frame.demo != null && typeof frame.demo !== 'boolean') return null;
   if (!frame.ready) return { ready: false };
   const heroes = rows(frame.h, 64, 4, ([id, x, y, hp]) => integer(id, 100, 9999) &&
     coordinate(x) && coordinate(y) && percent(hp));
@@ -28,7 +34,16 @@ export function parseRadarFrame(raw) {
     coordinate(x) && coordinate(y) && integer(seconds, 0, 86400));
   const structures = frame.t == null || rows(frame.t, 48, 5, ([team, kind, x, y, hp]) =>
     camp(team) && integer(kind, 1, 2) && coordinate(x) && coordinate(y) && percent(hp));
-  if (!camp(frame.camp) || !heroes || !monsters || !structures || (frame.s != null && !point(frame.s))) return null;
+  const lanes = frame.l == null || rows(frame.l, 256, 3, ([team, x, y]) => camp(team) && coordinate(x) && coordinate(y));
+  const seen = new Set();
+  const skills = frame.a == null || rows(frame.a, 10, 5, ([slot, id, state, normal, summon]) => {
+    if (!integer(slot, 0, 9) || seen.has(slot)) return false;
+    seen.add(slot);
+    return integer(id, 100, 9999) && integer(state, 0, 3) &&
+      Array.isArray(normal) && normal.length >= 3 && normal.length <= 4 &&
+      normal.every(row => ability(row, false)) && ability(summon, true);
+  });
+  if (!camp(frame.camp) || !heroes || !monsters || !structures || !lanes || !skills || (frame.s != null && !point(frame.s))) return null;
   if (frame.sid != null && !integer(frame.sid, 100, 9999)) return null;
   if (frame.map !== null && (typeof frame.map !== 'string' || !/^[a-z0-9_]{1,24}$/.test(frame.map))) return null;
   return frame;
@@ -38,6 +53,20 @@ export function heroPortraitUrls(id) {
   if (!integer(id, 100, 9999)) return [];
   const path = `https://game.gtimg.cn/images/yxzj/img201606/heroimg/${id}/${id}`;
   return [path + '.jpg', path + '.png'];
+}
+
+export function abilityIconUrl(id, summoner = false) {
+  const base = 'https://game.gtimg.cn/images/yxzj/img201606/';
+  if (summoner) return integer(id, 80000, 80999) ? base + `summoner/${id}.jpg` : null;
+  if (!integer(id, 10000, 999999)) return null;
+  const owner = [32010, 32020, 32030].includes(id) ? 120 : Math.floor(id / 100);
+  return base + `heroimg/${owner}/${id}.png`;
+}
+
+export function abilityState([, seconds, level]) {
+  if (seconds < 0 || level < 0) return 'unknown';
+  if (!level) return 'unlearned';
+  return seconds > 0 ? 'cooldown' : 'ready';
 }
 
 export function mapPoint(x, y, size, rotated) {
