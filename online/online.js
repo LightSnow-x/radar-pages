@@ -11,10 +11,10 @@
     codm:{english:'Call of Duty Mobile',image:'codm.png',site:'https://codm.qq.com/'},
     cfm:{english:'CrossFire Mobile',image:'cfm.png',site:'https://cfm.qq.com/'},
     pve:{english:'Mini World Royale',image:'pve.ico',site:'https://www.minifire.cn/'},
+    sgame:{english:'Honor of Kings',image:'sgame.ico',site:'https://www.honorofkings.com/'},
     yhtj:{english:'Lost Light',image:'yhtj.png',site:'https://yhtj.163.com/'},
     lolm:{english:'League of Legends: Wild Rift',image:'lolm.svg',site:'https://lolm.qq.com/'},
-    valorant:{english:'Valorant Mobile',image:'valorant.png',site:'https://valm.qq.com/'},
-    sgame:{english:'Honor of Kings',image:'sgame.png',site:'https://pvp.qq.com/'}
+    valorant:{english:'Valorant Mobile',image:'valorant.png',site:'https://valm.qq.com/'}
   };
   function node(tag,className,text) {
     const element=document.createElement(tag);element.className=className;
